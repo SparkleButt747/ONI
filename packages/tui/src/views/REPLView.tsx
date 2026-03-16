@@ -1,14 +1,12 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { color } from "../theme.js";
+import { color, subAgent } from "../theme.js";
 import {
   SessionHeader,
   MessageBubble,
   ToolCallLine,
   DiffView,
-  SubAgentLine,
   InputPrompt,
-  HazardDivider,
 } from "../components/index.js";
 import { useONI } from "../context/oni-context.js";
 
@@ -105,57 +103,75 @@ export function REPLView({ width }: REPLViewProps) {
 
       {/* Message history */}
       <Box flexDirection="column" marginTop={1}>
-        {oni.messages.map((msg) => (
-          <Box key={msg.id} flexDirection="column">
-            <MessageBubble
-              role={msg.role}
-              content={msg.content}
-              agent={msg.agent}
-            />
-            {/* Inline tool calls that came with this message */}
-            {msg.toolCalls?.map((tc, i) => (
-              <Box key={`${msg.id}-tc-${i}`} marginLeft={2}>
-                <ToolCallLine
-                  timestamp={tc.timestamp}
-                  tool={tc.tool}
-                  args={tc.args}
-                  latency={tc.latency}
-                  plugin={tc.plugin}
-                  status={tc.status}
-                />
+        {oni.messages.map((msg) => {
+          // For executor messages, show as "oni › [⚡]" then content below
+          if (msg.role === "oni" && msg.agent === "executor") {
+            const execPrefix = subAgent.executor;
+            return (
+              <Box key={msg.id} flexDirection="column" marginTop={1}>
+                <Box gap={0}>
+                  <Text color={color.amber}>{"oni › "}</Text>
+                  <Text color={execPrefix.color} bold>{execPrefix.prefix}</Text>
+                </Box>
+                <Text color={color.text}>{msg.content}</Text>
+                {/* Inline diff */}
+                {msg.diff && (
+                  <Box marginTop={1} marginLeft={2}>
+                    <DiffView
+                      file={msg.diff.file}
+                      additions={msg.diff.additions}
+                      deletions={msg.diff.deletions}
+                      lines={msg.diff.lines}
+                    />
+                  </Box>
+                )}
+                {/* Write prompt after diff */}
+                {msg.diff && (
+                  <Box marginTop={1}>
+                    <Text color={color.muted}>
+                      Write to <Text color={color.white}>{msg.diff.file}</Text>?{" "}
+                      <Text color={color.amber} bold>[y]</Text> / n / diff
+                    </Text>
+                  </Box>
+                )}
               </Box>
-            ))}
-            {/* Inline diff */}
-            {msg.diff && (
-              <Box marginTop={1} marginLeft={2}>
-                <DiffView
-                  file={msg.diff.file}
-                  additions={msg.diff.additions}
-                  deletions={msg.diff.deletions}
-                  lines={msg.diff.lines}
-                />
-              </Box>
-            )}
-          </Box>
-        ))}
-      </Box>
+            );
+          }
 
-      {/* Inline tool log (global — tool calls that arrive between messages) */}
-      {oni.toolLog.length > 0 && (
-        <Box flexDirection="column" marginTop={1}>
-          {oni.toolLog.slice(-6).map((tc, i) => (
-            <ToolCallLine
-              key={`tl-${i}`}
-              timestamp={tc.timestamp}
-              tool={tc.tool}
-              args={tc.args}
-              latency={tc.latency}
-              plugin={tc.plugin}
-              status={tc.status}
-            />
-          ))}
-        </Box>
-      )}
+          return (
+            <Box key={msg.id} flexDirection="column">
+              <MessageBubble
+                role={msg.role}
+                content={msg.content}
+                agent={msg.agent}
+              />
+              {/* Inline tool calls that came with this message */}
+              {msg.toolCalls?.map((tc, i) => (
+                <Box key={`${msg.id}-tc-${i}`} marginLeft={2}>
+                  <ToolCallLine
+                    tool={tc.tool}
+                    args={tc.args}
+                    latency={tc.latency}
+                    plugin={tc.plugin}
+                    status={tc.status}
+                  />
+                </Box>
+              ))}
+              {/* Inline diff (non-executor messages) */}
+              {msg.diff && (
+                <Box marginTop={1} marginLeft={2}>
+                  <DiffView
+                    file={msg.diff.file}
+                    additions={msg.diff.additions}
+                    deletions={msg.diff.deletions}
+                    lines={msg.diff.lines}
+                  />
+                </Box>
+              )}
+            </Box>
+          );
+        })}
+      </Box>
 
       {/* Separator */}
       <Box marginTop={1}>

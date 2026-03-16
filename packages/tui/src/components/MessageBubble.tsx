@@ -12,10 +12,8 @@ export function MessageBubble({ role, content, agent }: MessageBubbleProps) {
   if (role === "user") {
     return (
       <Box marginTop={1}>
-        <Text color={color.amber} bold>
-          {"you › "}
-        </Text>
-        <Text color={color.white}>{content}</Text>
+        <Text color={color.amber} bold>{"you ›"}</Text>
+        <Text color={color.white}>{" "}{content}</Text>
       </Box>
     );
   }
@@ -24,17 +22,19 @@ export function MessageBubble({ role, content, agent }: MessageBubbleProps) {
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Box>
-        <Text color={color.amber} bold>
-          {"ONI › "}
-        </Text>
-        {prefix && (
-          <Text color={prefix.color} bold>
-            {prefix.prefix}
-          </Text>
+      <Box gap={0}>
+        {prefix ? (
+          <Box gap={1}>
+            <Text color={prefix.color} bold>{prefix.prefix}</Text>
+            <Text color={color.text}>{content}</Text>
+          </Box>
+        ) : (
+          <Box gap={0}>
+            <Text color={color.amber}>{"oni › "}</Text>
+            <Text color={color.text}>{content}</Text>
+          </Box>
         )}
       </Box>
-      <Text color={color.text}>{content}</Text>
     </Box>
   );
 }

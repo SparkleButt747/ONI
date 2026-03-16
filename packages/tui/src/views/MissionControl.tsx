@@ -100,64 +100,63 @@ export function MissionControl({ width }: MissionControlProps) {
 
       <HazardDivider width={width} />
 
-      {/* TASK QUEUE — full width */}
-      <Box marginTop={1} flexDirection="column">
-        <SectionHeader title="Task queue" accentColor={color.amber} />
-        <Box marginTop={1}>
-          <TaskQueue tasks={oni.tasks} />
-        </Box>
-      </Box>
-
+      {/* TWO-COLUMN SECTION */}
       <Box marginTop={1}>
-        <Text color={color.border}>
-          {"─".repeat(width)}
-        </Text>
-      </Box>
-
-      {/* SYNC + CONTEXT + AGENTS — stacked vertically */}
-      <Box marginTop={1} flexDirection="column">
-        <SectionHeader title="Claude.ai sync" accentColor={color.lime} />
-        <Box marginTop={1}>
-          <SyncPanel
-            status={oni.syncStatus}
-            convId={oni.convId}
-            lastSync="3s ago"
-          />
+        {/* LEFT: Task queue */}
+        <Box flexDirection="column" flexGrow={1} flexBasis={0}>
+          <SectionHeader title="Task queue" accentColor={color.amber} />
+          <Box marginTop={1}>
+            <TaskQueue tasks={oni.tasks} />
+          </Box>
         </Box>
-      </Box>
 
-      <Box marginTop={1} flexDirection="column">
-        <SectionHeader title="Context window" accentColor={color.warning} />
-        <Box marginTop={1} flexDirection="column">
-          <ProgressBar
-            label={`${tokStr} / 200k tokens`}
-            value={oni.tokens / oni.maxTokens}
-            width={Math.min(24, width - 30)}
-            warnAt={0.6}
-            critAt={0.8}
-            valueLabel={`${Math.round((oni.tokens / oni.maxTokens) * 100)}%`}
-          />
-          <ProgressBar
-            label="burn rate"
-            value={Math.min(oni.burnRate / 5000, 1)}
-            width={Math.min(24, width - 30)}
-            warnAt={0.5}
-            critAt={0.75}
-            valueLabel={`${burnStr}/m`}
-          />
-        </Box>
-      </Box>
+        <Box width={1} />
 
-      <Box marginTop={1} flexDirection="column">
-        <SectionHeader title="Sub-agents" accentColor={color.violet} />
-        <Box marginTop={1}>
-          <AgentStatus states={oni.agentStates} />
+        {/* RIGHT: Sync + Context + Agents */}
+        <Box flexDirection="column" flexGrow={1} flexBasis={0}>
+          <SectionHeader title="Claude.ai sync" accentColor={color.lime} />
+          <Box marginTop={1}>
+            <SyncPanel
+              status={oni.syncStatus}
+              convId={oni.convId}
+              lastSync="3s ago"
+            />
+          </Box>
+
+          <Box marginTop={1} flexDirection="column">
+            <SectionHeader title="Context window" accentColor={color.warning} />
+            <Box marginTop={1} flexDirection="column">
+              <ProgressBar
+                label={`${tokStr} / 200k tokens`}
+                value={oni.tokens / oni.maxTokens}
+                width={Math.min(24, Math.floor(width / 2) - 10)}
+                warnAt={0.6}
+                critAt={0.8}
+                valueLabel={`${Math.round((oni.tokens / oni.maxTokens) * 100)}%`}
+              />
+              <ProgressBar
+                label="burn rate"
+                value={Math.min(oni.burnRate / 5000, 1)}
+                width={Math.min(24, Math.floor(width / 2) - 10)}
+                warnAt={0.5}
+                critAt={0.75}
+                valueLabel={`${burnStr}/m`}
+              />
+            </Box>
+          </Box>
+
+          <Box marginTop={1} flexDirection="column">
+            <SectionHeader title="Sub-agents" accentColor={color.violet} />
+            <Box marginTop={1}>
+              <AgentStatus states={oni.agentStates} />
+            </Box>
+          </Box>
         </Box>
       </Box>
 
       <HazardDivider width={width} />
 
-      {/* TOOL LOG */}
+      {/* TOOL LOG — full width */}
       <Box marginTop={1} flexDirection="column">
         <SectionHeader title="Tool call log" accentColor={color.cyan} />
         <Box marginTop={1} flexDirection="column">
@@ -179,7 +178,7 @@ export function MissionControl({ width }: MissionControlProps) {
         </Box>
       </Box>
 
-      {/* ACTIVE DIFF */}
+      {/* ACTIVE DIFF — full width */}
       {oni.activeDiff && (
         <Box marginTop={1} flexDirection="column">
           <SectionHeader

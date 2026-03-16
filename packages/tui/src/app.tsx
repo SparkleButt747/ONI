@@ -42,7 +42,13 @@ function AppInner() {
             <Text color={color.amber} bold>
               {"ONI "}
             </Text>
-            <Text color={color.muted}>ONBOARD NEURAL INTELLIGENCE</Text>
+            {oni.view === "mc" ? (
+              <Text color={color.muted}>
+                MISSION CONTROL · <Text color={color.dim}>{oni.convId}</Text>
+              </Text>
+            ) : (
+              <Text color={color.muted}>ONBOARD NEURAL INTELLIGENCE</Text>
+            )}
             <Box flexGrow={1} />
             <Box gap={2}>
               <Text
