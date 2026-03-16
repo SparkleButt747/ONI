@@ -5,6 +5,7 @@ import { logoutCommand } from "./commands/logout.js";
 import { chatCommand } from "./commands/chat.js";
 import { askCommand } from "./commands/ask.js";
 import { configCommand } from "./commands/config-cmd.js";
+import { prefsCommand } from "./commands/prefs.js";
 
 const program = new Command();
 
@@ -18,5 +19,6 @@ program.addCommand(logoutCommand);
 program.addCommand(chatCommand);
 program.addCommand(askCommand);
 program.addCommand(configCommand);
+program.addCommand(prefsCommand);
 
 program.parse();
