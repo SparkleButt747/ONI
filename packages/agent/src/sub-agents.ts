@@ -56,7 +56,11 @@ async function* runSubAgent(
   userMessage: string,
   config: SubAgentConfig,
 ): AsyncGenerator<StreamEvent, string> {
-  const client = new Anthropic({ apiKey: config.apiKey });
+  const client = new Anthropic({
+    apiKey: config.apiKey,
+    maxRetries: 4,
+    timeout: 5 * 60 * 1000,
+  });
   const systemPrompt = buildSubAgentPrompt(role, config.projectDir);
   const tools = role === "executor" ? getAllToolSchemas() : [];
   const conversation = new Conversation();

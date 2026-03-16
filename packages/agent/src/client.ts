@@ -46,11 +46,12 @@ export async function* runAgent(
   conversation: Conversation,
   config: AgentConfig,
 ): AsyncGenerator<StreamEvent> {
-  // SDK handles retry for 429/500/529 at the HTTP level with exponential backoff
+  // All tokens sent as apiKey — OAuth tokens (sk-ant-oat*) may get intermittent 500s
+  // but there's no official third-party OAuth support from Anthropic
   const client = new Anthropic({
     apiKey: config.apiKey,
     maxRetries: 4,
-    timeout: 5 * 60 * 1000, // 5 min timeout
+    timeout: 5 * 60 * 1000,
   });
 
   const systemPrompt = buildSystemPrompt(config.projectDir, config.contextChunks);
