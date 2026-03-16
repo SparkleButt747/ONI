@@ -29,12 +29,12 @@ describe("PreferenceEngine", () => {
     expect(engine.score("bash", "debug")).toBeGreaterThan(0.5);
   });
 
-  test("reject signal decreases score", () => {
-    // Start with an accept to establish a baseline > 0.5
-    engine.record({ sessionId: "s1", toolName: "bash", intentKey: "debug", outcome: "accepted" });
-    const before = engine.score("bash", "debug");
-    engine.record({ sessionId: "s1", toolName: "bash", intentKey: "debug", outcome: "rejected" });
-    expect(engine.score("bash", "debug")).toBeLessThan(before);
+  test("reject signal decreases score below default", () => {
+    // Multiple rejects should push score below 0.5
+    engine.record({ sessionId: "s1", toolName: "web_search", intentKey: "debug", outcome: "rejected" });
+    engine.record({ sessionId: "s2", toolName: "web_search", intentKey: "debug", outcome: "rejected" });
+    engine.record({ sessionId: "s3", toolName: "web_search", intentKey: "debug", outcome: "rejected" });
+    expect(engine.score("web_search", "debug")).toBeLessThan(0.5);
   });
 
   test("always sets weight to 1.0", () => {

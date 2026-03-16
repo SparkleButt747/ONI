@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { Conversation } from "./conversation.js";
-import { buildSystemPrompt } from "./system-prompt.js";
+import { buildSystemPrompt, type ContextChunk } from "./system-prompt.js";
 import { getAllToolSchemas, executeTool } from "./tools/index.js";
 import type { PermissionSet } from "./tools/types.js";
 
@@ -10,6 +10,7 @@ export interface AgentConfig {
   projectDir: string;
   permissions: PermissionSet;
   maxToolRounds?: number;
+  contextChunks?: ContextChunk[];
 }
 
 export interface StreamEvent {
@@ -46,7 +47,7 @@ export async function* runAgent(
   config: AgentConfig,
 ): AsyncGenerator<StreamEvent> {
   const client = new Anthropic({ apiKey: config.apiKey });
-  const systemPrompt = buildSystemPrompt(config.projectDir);
+  const systemPrompt = buildSystemPrompt(config.projectDir, config.contextChunks);
   const tools = getAllToolSchemas();
 
   conversation.addUser(userMessage);

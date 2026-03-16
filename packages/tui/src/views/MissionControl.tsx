@@ -2,8 +2,10 @@ import React from "react";
 import { Box, Text } from "ink";
 import { color } from "../theme.js";
 import {
+  AgentStatus,
   HazardDivider,
   SectionHeader,
+  TaskQueue,
   ToolCallLine,
 } from "../components/index.js";
 import { PhaseGate } from "../components/PhaseGate.js";
@@ -37,6 +39,7 @@ export function MissionControl({ width }: MissionControlProps) {
 
       {/* Main content */}
       <Box flexDirection="column" flexGrow={1}>
+        {/* 1. Session info + LIVE badge */}
         <Box>
           <Text color={color.muted}>
             SESSION <Text color={color.text}>{oni.convId}</Text> ·{" "}
@@ -47,9 +50,26 @@ export function MissionControl({ width }: MissionControlProps) {
           <Text color={color.lime} bold>● LIVE</Text>
         </Box>
 
+        {/* 2. Hazard divider */}
         <HazardDivider width={width - 4} />
 
-        {/* TOOL LOG — Phase 1 (active) */}
+        {/* 3. Sub-agent status — UNGATED (Phase 3) */}
+        <Box marginTop={1} flexDirection="column">
+          <SectionHeader title="SUB-AGENTS" accentColor={color.violet} />
+          <Box marginTop={1}>
+            <AgentStatus states={oni.agentStates} />
+          </Box>
+        </Box>
+
+        {/* 4. Task queue — UNGATED (Phase 3) */}
+        <Box marginTop={1} flexDirection="column">
+          <SectionHeader title="TASK QUEUE" accentColor={color.cyan} />
+          <Box marginTop={1}>
+            <TaskQueue tasks={oni.tasks} />
+          </Box>
+        </Box>
+
+        {/* 5. Tool call log */}
         <Box marginTop={1} flexDirection="column">
           <SectionHeader title="TOOL CALL LOG" accentColor={color.cyan} />
           <Box marginTop={1} flexDirection="column">
@@ -71,14 +91,10 @@ export function MissionControl({ width }: MissionControlProps) {
           </Box>
         </Box>
 
+        {/* 6. Hazard divider */}
         <HazardDivider width={width - 4} />
 
-        {/* Phase-gated features */}
-        <PhaseGate phase={2} feature="Context engine — project indexing + retrieval" />
-        <PhaseGate phase={3} feature="Sub-agent status — Planner / Executor / Critic" />
-        <PhaseGate phase={3} feature="Task queue — background agents" />
-        <PhaseGate phase={3} feature="Claude.ai sync — conversation mirroring" />
-        <PhaseGate phase={3} feature="Active diff — inline file change review" />
+        {/* Phase-gated features (Phase 4+) */}
         <PhaseGate phase={4} feature="Preference learning — adaptive tool proposals" />
         <PhaseGate phase={4} feature="MCP plugins — third-party tool ecosystem" />
       </Box>

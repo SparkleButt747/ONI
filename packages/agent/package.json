@@ -8,7 +8,9 @@
     "./tools": "./src/tools/index.ts",
     "./conversation": "./src/conversation.ts",
     "./permissions": "./src/permissions.ts",
-    "./budget": "./src/budget.ts"
+    "./budget": "./src/budget.ts",
+    "./sub-agents": "./src/sub-agents.ts",
+    "./sub-agent-prompts": "./src/sub-agent-prompts.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

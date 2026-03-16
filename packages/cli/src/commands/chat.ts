@@ -8,11 +8,13 @@ export const chatCommand = new Command("chat")
   .option("--write", "Allow file writes")
   .option("--exec", "Allow bash execution")
   .option("--model <model>", "Model override")
+  .option("--agents", "Enable sub-agent loop (Planner → Executor → Critic)")
   .option("--budget <tokens>", "Max tokens for this session (e.g. 50000)")
   .option("--monthly-limit <tokens>", "Monthly token limit")
   .action(async (options) => {
     const { resolveApiKey } = await import("@oni/auth");
     const { runAgent } = await import("@oni/agent");
+    const { runWithSubAgents } = await import("@oni/agent/sub-agents");
     const { Conversation } = await import("@oni/agent/conversation");
     const { createPermissions } = await import("@oni/agent/permissions");
     const { BudgetTracker } = await import("@oni/agent/budget");
@@ -62,6 +64,8 @@ export const chatCommand = new Command("chat")
     const conv = createConversation(db, projectDir);
     const conversation = new Conversation();
 
+    const useAgents = Boolean(options.agents);
+
     // Dispatch factory: creates a function bound to the ONI context
     // that streams agent events into the TUI state.
     const createDispatch: CreateDispatchFn = (oni: ONIState) => {
@@ -69,22 +73,89 @@ export const chatCommand = new Command("chat")
         insertMessage(db, conv.conv_id, "user", message);
         touchConversation(db, conv.conv_id);
 
+        // Retrieve context if an index exists
+        let contextChunks: Array<{ path: string; content: string }> | undefined;
+        try {
+          const { queryContext } = await import("@oni/context");
+          const pack = queryContext(projectDir, message, 4000);
+          if (pack.chunks.length > 0) {
+            contextChunks = pack.chunks.map((c) => ({ path: c.path, content: c.content }));
+          }
+        } catch {
+          // No index or context unavailable — continue without it
+        }
+
         const agentConfig = {
           model,
           apiKey: resolved.key,
           projectDir,
           permissions,
+          contextChunks,
         };
 
         let fullResponse = "";
         let currentMessageId: string | null = null;
 
-        for await (const event of runAgent(message, conversation, agentConfig)) {
+        const handleStreamEvent = (event: { type: string; content?: string; tool?: string; args?: Record<string, unknown>; result?: string; isError?: boolean; agent?: string; reason?: string }) => {
           switch (event.type) {
+            case "agent_start": {
+              const agent = (event as { agent: string }).agent;
+              const states = { planner: "idle" as const, executor: "idle" as const, critic: "idle" as const };
+              states[agent as keyof typeof states] = "active";
+              oni.setAgentStates(states);
+
+              // Add a task entry for this sub-agent run
+              oni.setTasks([
+                ...oni.tasks,
+                {
+                  id: `${agent}-${Date.now()}`,
+                  mission: `${agent.toUpperCase()} processing`,
+                  status: "RUNNING",
+                },
+              ]);
+
+              // Start a new message segment for this agent
+              fullResponse = "";
+              currentMessageId = null;
+              break;
+            }
+            case "agent_end": {
+              const agent = (event as { agent: string }).agent;
+              const states = { ...oni.agentStates };
+              states[agent as keyof typeof states] = "idle";
+              oni.setAgentStates(states);
+
+              // Update the latest task for this agent to DONE
+              const updatedTasks = [...oni.tasks];
+              for (let i = updatedTasks.length - 1; i >= 0; i--) {
+                if (
+                  updatedTasks[i].mission === `${agent.toUpperCase()} processing` &&
+                  updatedTasks[i].status === "RUNNING"
+                ) {
+                  updatedTasks[i] = { ...updatedTasks[i], status: "DONE" };
+                  break;
+                }
+              }
+              oni.setTasks(updatedTasks);
+
+              // Finalise the response for this sub-agent segment
+              if (fullResponse) {
+                insertMessage(db, conv.conv_id, "assistant", fullResponse);
+              }
+              break;
+            }
+            case "blocked": {
+              oni.setAgentStates({ planner: "idle", executor: "idle", critic: "idle" });
+              oni.addMessage({
+                id: `blocked-${Date.now()}`,
+                role: "oni",
+                content: `BLOCKED: ${(event as { reason: string }).reason}`,
+              });
+              break;
+            }
             case "text": {
               fullResponse += event.content ?? "";
               if (!currentMessageId) {
-                // Start a new assistant message
                 currentMessageId = `oni-${Date.now()}`;
                 oni.addMessage({
                   id: currentMessageId,
@@ -92,7 +163,6 @@ export const chatCommand = new Command("chat")
                   content: fullResponse,
                 });
               } else {
-                // Update existing message with accumulated text
                 oni.updateLastMessage((prev) => ({
                   ...prev,
                   content: fullResponse,
@@ -101,8 +171,6 @@ export const chatCommand = new Command("chat")
               break;
             }
             case "tool_call": {
-              // If we were streaming text, finalise that message segment
-              // and reset so the next text chunk starts a new message
               if (currentMessageId) {
                 currentMessageId = null;
               }
@@ -127,7 +195,6 @@ export const chatCommand = new Command("chat")
               if (fullResponse) {
                 insertMessage(db, conv.conv_id, "assistant", fullResponse);
 
-                // Budget tracking
                 const estimatedTokens = Math.ceil(fullResponse.length / 4);
                 const withinBudget = budget.record(estimatedTokens);
                 if (!withinBudget) {
@@ -138,7 +205,6 @@ export const chatCommand = new Command("chat")
                   });
                 }
 
-                // Update token display
                 oni.setTokens(budget.sessionUsed);
               }
               break;
@@ -151,6 +217,16 @@ export const chatCommand = new Command("chat")
               });
               break;
             }
+          }
+        };
+
+        if (useAgents) {
+          for await (const event of runWithSubAgents(message, agentConfig)) {
+            handleStreamEvent(event);
+          }
+        } else {
+          for await (const event of runAgent(message, conversation, agentConfig)) {
+            handleStreamEvent(event);
           }
         }
       };
@@ -179,6 +255,21 @@ export const chatCommand = new Command("chat")
         ok: true,
       },
     ];
+
+    // Check if context index exists
+    try {
+      const { existsSync } = await import("node:fs");
+      const indexExists = existsSync(join(projectDir, ".oni", "index.db"));
+      if (indexExists) {
+        bootSteps.push({
+          label: "context",
+          detail: "project indexed · FTS5 retrieval active",
+          ok: true,
+        });
+      }
+    } catch {
+      // Context check failed — skip silently
+    }
 
     if (sessionLimit > 0 || monthlyLimit > 0) {
       const parts: string[] = [];

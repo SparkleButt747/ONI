@@ -6,6 +6,7 @@ import { chatCommand } from "./commands/chat.js";
 import { askCommand } from "./commands/ask.js";
 import { configCommand } from "./commands/config-cmd.js";
 import { prefsCommand } from "./commands/prefs.js";
+import { initCommand } from "./commands/init.js";
 
 const program = new Command();
 
@@ -20,5 +21,6 @@ program.addCommand(chatCommand);
 program.addCommand(askCommand);
 program.addCommand(configCommand);
 program.addCommand(prefsCommand);
+program.addCommand(initCommand);
 
 program.parse();

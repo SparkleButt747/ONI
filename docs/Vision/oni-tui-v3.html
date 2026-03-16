@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONI — TUI v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#05050a;
+  --ink:#080810;
+  --panel:#0c0c18;
+  --lift:#121224;
+  --edge:#1a1a38;
+  --wire:#222244;
+  --stone:#3a3a6a;
+  --ash:#6060aa;
+  --fog:#8888cc;
+  --bone:#ccccff;
+
+  /* Marathon palette: electric blue + neon lime + hot coral + amber */
+  --blue:#1a4dff;
+  --blue-b:#0033cc;
+  --lime:#8fff00;
+  --lime-d:#5aaa00;
+  --lime-dim:rgba(143,255,0,.08);
+  --coral:#ff3060;
+  --coral-dim:rgba(255,48,96,.08);
+  --amber:#f5a623;
+  --amber-dim:rgba(245,166,35,.08);
+  --cyan:#00d4c8;
+  --violet:#7b5ea7;
+  --gold:#e8ea00;
+
+  --mono:'Share Tech Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--void);
+  color:var(--fog);
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.4;
+  overflow-x:hidden;
+}
+
+/* SCANLINE */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* DOT GRID BG pattern — like screenshot 7 */
+.dot-grid-bg{
+  background-image:radial-gradient(circle, rgba(143,255,0,.18) 1px, transparent 1px);
+  background-size:18px 18px;
+}
+.dot-grid-bg-blue{
+  background-image:radial-gradient(circle, rgba(26,77,255,.25) 1px, transparent 1px);
+  background-size:18px 18px;
+}
+
+/* PAGE */
+.page{max-width:1100px;margin:0 auto;padding:0 20px 120px}
+
+/* ─── SECTION DIVIDER ─────────────────────────────── */
+.SD{display:flex;align-items:center;gap:10px;margin:64px 0 18px}
+.SD-n{font-size:9px;color:var(--amber);letter-spacing:.2em;opacity:.7}
+.SD-t{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
+.SD-r{flex:1;height:1px;background:var(--edge)}
+
+/* ─── TERMINAL CHROME ─────────────────────────────── */
+.T{background:var(--ink);border:1px solid var(--edge);position:relative;overflow:hidden}
+.T-stripe{height:2px;background:linear-gradient(90deg,var(--coral) 0%,var(--coral) 14%,var(--amber) 14%,var(--amber) 28%,var(--gold) 28%,var(--gold) 42%,var(--lime) 42%,var(--lime) 56%,var(--cyan) 56%,var(--cyan) 70%,var(--blue) 70%,var(--blue) 84%,var(--coral) 84%)}
+.T-bar{background:var(--panel);border-bottom:1px solid var(--edge);padding:8px 14px;display:flex;align-items:center;gap:10px}
+.TD{display:flex;gap:5px}
+.td{width:9px;height:9px;border-radius:50%}
+.td-r{background:#ff5f57}.td-y{background:#ffbd2e}.td-g{background:#28ca41}
+.T-title{flex:1;text-align:center;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--stone)}
+.RPL{background:transparent;border:1px solid var(--edge);color:var(--stone);font-family:var(--mono);font-size:8px;letter-spacing:.15em;text-transform:uppercase;padding:2px 8px;cursor:pointer;transition:border-color .1s,color .1s}
+.RPL:hover{border-color:var(--lime);color:var(--lime)}
+.T-body{padding:18px 20px}
+
+/* ─── CURSOR ──────────────────────────────────────── */
+@keyframes BLINK{0%,49%{opacity:1}50%,100%{opacity:0}}
+.CUR{display:inline-block;width:8px;height:13px;background:var(--lime);animation:BLINK 1s steps(1) infinite;vertical-align:middle;margin-left:2px}
+
+/* ─── MASSIVE DISPLAY TYPE ────────────────────────── */
+.DISPLAY{
+  font-family:var(--disp);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:-.02em;
+  line-height:.88;
+}
+
+/* ─── STROKE TEXT (PASSPHRASE wallpaper style) ─────── */
+.STROKE{
+  -webkit-text-stroke:1.5px var(--lime);
+  color:transparent;
+  font-family:var(--disp);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:-.02em;
+}
+.STROKE-blue{-webkit-text-stroke:1.5px var(--blue);color:transparent}
+.STROKE-coral{-webkit-text-stroke:1.5px var(--coral);color:transparent}
+.STROKE-amber{-webkit-text-stroke:1.5px var(--amber);color:transparent}
+
+/* ─── VERTICAL TEXT ───────────────────────────────── */
+.VERT{
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  transform:rotate(180deg);
+  font-family:var(--disp);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+
+/* ─── DATA CLUSTER (floating corner labels) ────────── */
+.DC{
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--ash);
+  line-height:1.6;
+}
+.DC b{color:var(--bone);font-weight:normal}
+.DC-border{border:1px solid var(--edge);padding:4px 8px;display:inline-block}
+
+/* ─── PIXEL DASHED CONTAINER (Marathon UI boxes) ───── */
+.PX{
+  border:1px dashed rgba(143,255,0,.3);
+  position:relative;
+}
+.PX::before,.PX::after{
+  content:'';position:absolute;
+  width:6px;height:6px;
+  border:1px solid var(--lime);
+}
+.PX::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.PX::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+.PX-blue{border-color:rgba(26,77,255,.4)}
+.PX-blue::before,.PX-blue::after{border-color:var(--blue)}
+.PX-coral{border-color:rgba(255,48,96,.4)}
+.PX-coral::before,.PX-coral::after{border-color:var(--coral)}
+
+/* ─── STATUS TAGS ─────────────────────────────────── */
+.TAG{display:inline-block;font-size:8px;font-family:var(--mono);letter-spacing:.15em;text-transform:uppercase;padding:2px 6px;border:1px solid;line-height:1.6}
+.TAG-L{color:var(--lime);border-color:var(--lime);background:var(--lime-dim)}
+.TAG-R{color:var(--coral);border-color:var(--coral);background:var(--coral-dim)}
+.TAG-A{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+.TAG-B{color:var(--blue);border-color:var(--blue);background:rgba(26,77,255,.08)}
+.TAG-D{color:var(--stone);border-color:var(--wire)}
+
+/* ─── PROGRESS BAR ────────────────────────────────── */
+.PB{display:flex;align-items:center;gap:8px;margin:4px 0}
+.PB-l{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);width:130px;flex-shrink:0}
+.PB-t{flex:1;height:3px;background:var(--wire)}
+.PB-f{height:100%}
+.PB-v{font-size:9px;color:var(--stone);width:36px;text-align:right;flex-shrink:0}
+
+/* ─── PROMPT ──────────────────────────────────────── */
+.PS{display:flex;align-items:baseline;gap:0;margin:3px 0}
+.PS-dir{color:var(--cyan)}
+.PS-git{color:var(--violet)}
+.PS-sym{color:var(--stone)}
+.PS-you{color:var(--lime);font-weight:bold;letter-spacing:.06em}
+.PS-oni{color:var(--lime);letter-spacing:.06em}
+
+/* ─── TOOL LINES ──────────────────────────────────── */
+.TL{display:flex;align-items:baseline;gap:8px;padding:3px 0;border-left:2px solid transparent}
+.TLb{font-size:8px;padding:1px 5px;border:1px solid var(--cyan);color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;flex-shrink:0}
+.TLb-P{border-color:var(--violet);color:var(--violet)}
+.TLb-E{border-color:var(--coral);color:var(--coral)}
+.TLn{color:var(--cyan);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.TLn-P{color:var(--violet)}
+.TLa{color:var(--stone);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.TLms{color:var(--wire);font-size:10px;flex-shrink:0;margin-left:auto}
+
+/* ─── DIFF ────────────────────────────────────────── */
+.DL{display:block;padding:2px 8px;font-size:11px}
+.DL-A{color:var(--lime);background:var(--lime-dim)}
+.DL-R{color:var(--coral);background:var(--coral-dim)}
+.DL-C{color:var(--stone)}
+.DL-H{color:var(--amber);background:var(--amber-dim);font-family:var(--disp);font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;display:block;padding:4px 8px}
+
+/* ─── KBD ─────────────────────────────────────────── */
+.KBD{display:inline-block;border:1px solid;padding:1px 6px;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.KBD-L{border-color:var(--lime);color:var(--lime)}
+.KBD-R{border-color:var(--coral);color:var(--coral)}
+.KBD-D{border-color:var(--wire);color:var(--stone)}
+
+/* ─── ARC PROGRESS ────────────────────────────────── */
+.arc-wrap{position:relative;width:80px;height:80px}
+.arc-wrap svg{width:100%;height:100%}
+
+/* ─── SYNC ────────────────────────────────────────── */
+@keyframes RIPPLE{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.8);opacity:0}}
+@keyframes BREATHE{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.6)}}
+.SW{position:relative;width:10px;height:10px;flex-shrink:0}
+.SW-c{position:absolute;inset:2px;border-radius:50%;background:var(--lime);animation:BREATHE 2s ease-in-out infinite}
+.SW-r{position:absolute;inset:0;border-radius:50%;border:1px solid var(--lime);animation:RIPPLE 2s ease-out infinite}
+
+/* ─── ANIMATIONS ──────────────────────────────────── */
+@keyframes SCAN{0%{opacity:0;clip-path:inset(0 100% 0 0)}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes STAMP{0%{opacity:0;transform:scaleX(1.06)}50%{opacity:1;transform:scaleX(.98)}100%{transform:scaleX(1)}}
+@keyframes HAZ{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes GLITCH{0%,100%{transform:translateX(0)}15%{transform:translateX(-5px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}75%{transform:translateX(-2px)}90%{transform:translateX(2px)}}
+@keyframes FLICKER{0%,98%,100%{opacity:1}99%{opacity:.2}}
+@keyframes VERDICT{from{clip-path:inset(0 100% 0 0);opacity:0}to{clip-path:inset(0 0 0 0);opacity:1}}
+@keyframes PB-IN{from{width:0}to{width:var(--w)}}
+@keyframes PULSE-O{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes DOT-BEAT{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.5);opacity:.25}}
+@keyframes BORDER-LIME{0%,100%{border-color:var(--edge)}50%{border-color:var(--lime)}}
+@keyframes DIFF-ADD{0%{opacity:0;background:rgba(143,255,0,.35)}100%{opacity:1;background:var(--lime-dim)}}
+@keyframes DIFF-REM{0%{opacity:0;background:rgba(255,48,96,.4)}100%{opacity:1;background:var(--coral-dim)}}
+@keyframes MARQUEE{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes VERT-DROP{from{opacity:0;transform:rotate(180deg) translateY(-20px)}to{opacity:1;transform:rotate(180deg) translateY(0)}}
+@keyframes MASSIVE-IN{0%{opacity:0;transform:translateY(12px) scaleY(.92)}60%{opacity:1;transform:translateY(-2px) scaleY(1.01)}100%{transform:translateY(0) scaleY(1)}}
+@keyframes STROKE-SCROLL{from{background-position:0 0}to{background-position:0 80px}}
+@keyframes ARC-DRAW{from{stroke-dashoffset:var(--full)}to{stroke-dashoffset:var(--offset)}}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<!-- ══════════════════════════════════════════════════
+     MASTHEAD
+═══════════════════════════════════════════════════ -->
+<div style="padding:40px 0 32px;border-bottom:1px solid var(--edge);position:relative;overflow:hidden">
+  <!-- dot grid bg -->
+  <div class="dot-grid-bg" style="position:absolute;inset:0;opacity:.4;pointer-events:none"></div>
+
+  <!-- Chroma stripe -->
+  <div style="height:3px;background:linear-gradient(90deg,var(--coral) 0%,var(--coral) 14%,var(--amber) 14%,var(--amber) 28%,var(--gold) 28%,var(--gold) 42%,var(--lime) 42%,var(--lime) 56%,var(--cyan) 56%,var(--cyan) 70%,var(--blue) 70%,var(--blue) 84%,var(--coral) 84%);margin-bottom:28px"></div>
+
+  <div style="position:relative;display:flex;align-items:flex-end;gap:0;justify-content:space-between">
+
+    <!-- LEFT: Massive title with vertical accent -->
+    <div style="display:flex;gap:16px;align-items:stretch">
+      <!-- Vertical label strip -->
+      <div style="width:20px;display:flex;align-items:center;justify-content:center;border-right:2px solid var(--lime);padding-right:0">
+        <div class="VERT" style="font-size:9px;color:var(--lime);font-weight:700;letter-spacing:.3em;opacity:.8">GRAPHIC REALISM</div>
+      </div>
+      <div>
+        <div style="font-size:9px;letter-spacing:.25em;color:var(--lime);opacity:.7;text-transform:uppercase;margin-bottom:8px;font-family:var(--mono)">ONI · TUI MOTION + LAYOUT · V3.0</div>
+        <!-- Giant display — with stroke mix -->
+        <div style="position:relative">
+          <div class="DISPLAY" style="font-size:72px;color:var(--bone)">ON<span style="color:var(--lime)">I</span></div>
+          <div class="DISPLAY STROKE" style="font-size:72px;position:absolute;top:0;left:0;opacity:.15;pointer-events:none">ONI</div>
+        </div>
+        <div class="DISPLAY" style="font-size:28px;color:var(--stone);letter-spacing:.06em">MOTION + LAYOUT</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Data cluster -->
+    <div style="text-align:right">
+      <div class="DC">
+        <b>VERSION</b> 3.0<br>
+        <b>BUILD</b> MARATHON-INSPIRED<br>
+        <b>AESTHETIC</b> GRAPHIC REALISM
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+        <span class="TAG TAG-L">ALL CAPS</span>
+        <span class="TAG TAG-B">VERTICAL TEXT</span>
+        <span class="TAG TAG-A">DOT GRID</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     01  BOOT — with dot grid + massive logo stamp
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">01</span><span class="SD-t">BOOT SEQUENCE — COLD START</span><div class="SD-r"></div></div>
+
+<div class="T" id="S01">
+  <div class="T-stripe"></div>
+  <div class="T-bar"><div class="TD"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div><div class="T-title">ONI — COLD START</div><button class="RPL" onclick="R('S01')">REPLAY</button></div>
+  <div style="position:relative;overflow:hidden">
+    <!-- Dot grid background -->
+    <div class="dot-grid-bg" style="position:absolute;inset:0;opacity:.5;pointer-events:none"></div>
+
+    <div class="T-body" style="position:relative;z-index:1">
+
+      <!-- Logo: huge stamp + vertical accent + data cluster -->
+      <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:20px">
+        <!-- Vertical left bar -->
+        <div style="width:16px;border-right:2px solid var(--lime);height:100%;display:flex;align-items:center;justify-content:center;padding-right:0;min-height:60px">
+          <div class="VERT" style="font-size:8px;color:var(--lime);letter-spacing:.3em;opacity:.7">SYSTEM</div>
+        </div>
+
+        <div style="flex:1">
+          <!-- APPROACH-style: label over big word -->
+          <div style="font-size:9px;color:var(--fog);letter-spacing:.18em;text-transform:uppercase;font-family:var(--mono);margin-bottom:4px" id="BOOT-EYE" style="opacity:0;animation:SCAN .1s steps(4) .05s both">SYSTEM_</div>
+          <div class="DISPLAY" id="BOOT-LOGO" style="font-size:56px;color:var(--lime);opacity:0;animation:STAMP .28s steps(8) .1s forwards">
+            ON<span style="color:var(--bone)">I</span>
+          </div>
+          <div style="font-size:9px;color:var(--stone);letter-spacing:.2em;text-transform:uppercase;font-family:var(--mono);margin-top:4px;opacity:0;animation:SCAN .1s steps(4) .45s both">ONBOARD NEURAL INTELLIGENCE · V0.1.0</div>
+        </div>
+
+        <!-- Right data cluster -->
+        <div class="DC" style="text-align:right;opacity:0;animation:SCAN .1s steps(4) .6s both">
+          <b>MODEL</b> CLAUDE-SONNET-4-6<br>
+          <b>AUTH</b> API-KEY · KEYCHAIN<br>
+          <b>PLUGINS</b> 3 LOADED
+        </div>
+      </div>
+
+      <!-- Hazard wipe -->
+      <div style="overflow:hidden;height:5px;margin-bottom:14px">
+        <div id="H01" style="height:100%;background:repeating-linear-gradient(90deg,var(--lime) 0,var(--lime) 8px,transparent 8px,transparent 16px);opacity:.45;transform:translateX(-100%);animation:HAZ .5s steps(10) .55s forwards"></div>
+      </div>
+
+      <!-- Init lines -->
+      <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:14px;padding-left:36px">
+        <div style="opacity:0;animation:SCAN .1s steps(4) .75s both"><span style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone)">INIT  </span><span style="color:var(--lime)">✓</span><span style="color:var(--fog)"> API TOKEN VALID — EXPIRES 47D</span></div>
+        <div style="opacity:0;animation:SCAN .1s steps(4) .92s both"><span style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone)">INIT  </span><span style="color:var(--lime)">✓</span><span style="color:var(--fog)"> PROJECT INDEX — 1,247 FILES · 18,432 SYMBOLS</span></div>
+        <div style="opacity:0;animation:SCAN .1s steps(4) 1.09s both"><span style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone)">INIT  </span><span style="color:var(--lime)">✓</span><span style="color:var(--fog)"> SYNC DAEMON — <span style="color:var(--cyan)">CONV_8FK2A9</span> LINKED</span></div>
+        <div style="opacity:0;animation:SCAN .1s steps(4) 1.26s both"><span style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone)">INIT  </span><span style="color:var(--lime)">✓</span><span style="color:var(--fog)"> PLUGINS — <span style="color:var(--cyan)">GITHUB · NPM · DOCKER</span></span></div>
+        <div style="opacity:0;animation:SCAN .1s steps(4) 1.43s both"><span style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone)">INIT  </span><span style="color:var(--lime)">✓</span><span style="color:var(--fog)"> 7 LEARNED RULES ACTIVE</span></div>
+      </div>
+
+      <!-- Bottom hazard + help -->
+      <div style="overflow:hidden;height:5px;margin-bottom:12px">
+        <div style="height:100%;background:repeating-linear-gradient(90deg,var(--lime) 0,var(--lime) 8px,transparent 8px,transparent 16px);opacity:.35;transform:translateX(-100%);animation:HAZ .5s steps(10) 1.55s forwards"></div>
+      </div>
+      <div style="opacity:0;animation:SCAN .1s steps(4) 1.7s both;font-size:10px;color:var(--stone);text-transform:uppercase;letter-spacing:.06em;padding-left:36px;margin-bottom:12px">
+        <span style="color:var(--lime)">:Q</span> EXIT &nbsp;·&nbsp; <span style="color:var(--lime)">:MC</span> MISSION CONTROL &nbsp;·&nbsp; <span style="color:var(--lime)">:DIFF</span> REVIEW &nbsp;·&nbsp; <span style="color:var(--lime)">:TOOLS</span> PLUGINS
+      </div>
+      <div class="PS" style="opacity:0;animation:SCAN .1s steps(3) 1.9s both;padding-left:36px">
+        <span class="PS-you">YOU › </span><div class="CUR"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     02  REPL — vertical "EXECUTING" side label
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">02</span><span class="SD-t">REPL — ACTIVE SESSION</span><div class="SD-r"></div></div>
+
+<div class="T">
+  <div class="T-stripe"></div>
+  <div class="T-bar"><div class="TD"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div><div class="T-title">ONI CHAT · CONV_8FK2A9 · 47.2K TOK · 3 RUNNING</div><span class="TAG TAG-L" style="font-size:7px">LIVE</span></div>
+  <div style="display:flex">
+    <!-- Vertical label strip -->
+    <div style="width:22px;background:var(--panel);border-right:1px solid var(--edge);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:14px 0;flex-shrink:0">
+      <div class="VERT" style="font-size:8px;color:var(--lime);letter-spacing:.2em;opacity:.7">EXECUTING</div>
+      <div class="VERT" style="font-size:8px;color:var(--stone);letter-spacing:.2em;opacity:.5">ONI-API</div>
+    </div>
+
+    <div class="T-body" style="flex:1">
+      <!-- Session header -->
+      <div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--edge);margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)">CONV_8FK2A9</span>
+        <span style="color:var(--wire)">·</span>
+        <span style="font-size:9px;color:var(--cyan);text-transform:uppercase">CLAUDE-SONNET-4-6</span>
+        <span style="color:var(--wire)">·</span>
+        <span style="font-size:9px;color:var(--fog);text-transform:uppercase">47.2K <span style="color:var(--stone)">/ 200K</span></span>
+        <span style="color:var(--wire)">·</span>
+        <span style="font-size:9px;color:var(--amber);text-transform:uppercase">1.8K/MIN</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          <div class="SW"><div class="SW-r"></div><div class="SW-c"></div></div>
+          <span style="font-size:9px;color:var(--lime);letter-spacing:.14em;text-transform:uppercase">SYNC LIVE</span>
+        </div>
+      </div>
+
+      <div class="PS" style="margin-bottom:6px">
+        <span class="PS-you">YOU › </span>
+        <span style="color:var(--bone);text-transform:uppercase;letter-spacing:.03em"> ORDER TOTAL WRONG FOR DISCOUNT CODES. FIX IT.</span>
+      </div>
+
+      <div style="margin:8px 0 4px">
+        <span style="color:var(--violet);text-transform:uppercase;letter-spacing:.1em">[Σ PLANNER]</span>
+        <span style="color:var(--stone);font-size:11px;text-transform:uppercase;letter-spacing:.04em"> 3 SUBTASKS · TOOL BUDGET 8 · EXECUTING</span>
+      </div>
+
+      <div style="border-left:1px solid var(--edge);padding-left:10px;margin:6px 0">
+        <div class="TL" style="animation:SCAN .12s steps(4) .05s both;opacity:0"><span class="TLb">TOOL</span><span class="TLn">READ_FILE</span><span class="TLa">src/services/PricingEngine.ts</span><span class="TLms">9MS</span></div>
+        <div class="TL" style="animation:SCAN .12s steps(4) .28s both;opacity:0"><span class="TLb">TOOL</span><span class="TLn">READ_FILE</span><span class="TLa">src/services/OrderService.ts:processTotal</span><span class="TLms">7MS</span></div>
+        <div class="TL" style="animation:SCAN .12s steps(4) .51s both;opacity:0"><span class="TLb">TOOL</span><span class="TLn">BASH</span><span class="TLa">npx jest PricingEngine --no-coverage 2>&amp;1 | tail -20</span><span class="TLms">1.4S</span></div>
+      </div>
+
+      <div style="margin:10px 0 4px">
+        <span style="color:var(--cyan);text-transform:uppercase;letter-spacing:.1em">[⚡ EXECUTOR]</span>
+      </div>
+      <div style="color:var(--fog);font-size:12px;line-height:1.7;margin-bottom:10px">
+        <span style="color:var(--coral);text-transform:uppercase">APPLYDISCOUNT()</span> RUNS AFTER <span style="color:var(--cyan);text-transform:uppercase">CALCULATETAX()</span> — DISCOUNTS REDUCE POST-TAX TOTAL. OFF BY TAX RATE ON EVERY DISCOUNTED ORDER. SWAPPING CALL ORDER.
+      </div>
+
+      <!-- Diff with dashed pixel container -->
+      <div class="PX" style="margin:8px 0;overflow:hidden">
+        <div class="DL-H">SRC/SERVICES/ORDERSERVICE.TS · +3 −2</div>
+        <span class="DL DL-C">  calculateSubtotal(items)</span>
+        <span class="DL DL-R" style="animation:DIFF-REM .18s steps(5) .3s both;opacity:0">- applyDiscount(calculateTax(subtotal), code)</span>
+        <span class="DL DL-A" style="animation:DIFF-ADD .18s steps(5) .48s both;opacity:0">+ const discounted = applyDiscount(subtotal, code)</span>
+        <span class="DL DL-A" style="animation:DIFF-ADD .18s steps(5) .65s both;opacity:0">+ calculateTax(discounted)</span>
+        <span class="DL DL-C">  return total</span>
+      </div>
+
+      <div style="margin:10px 0;font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+        <span style="color:var(--lime)">WRITE TO SRC/SERVICES/ORDERSERVICE.TS? </span>
+        <span class="KBD KBD-L">Y</span> <span style="color:var(--stone)">/</span>
+        <span class="KBD KBD-D">N</span> <span style="color:var(--stone)">/</span>
+        <span class="KBD KBD-D">DIFF</span>
+      </div>
+      <div style="border-top:1px solid var(--edge);padding-top:10px;margin-top:8px">
+        <div class="PS"><span class="PS-you">YOU › </span><div class="CUR"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     03  FAILURE — full-bleed text wallpaper
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">03</span><span class="SD-t">ERROR STATE — PASSPHRASE WALLPAPER STYLE</span><div class="SD-r"></div></div>
+
+<div class="T" id="S03" style="min-height:220px;position:relative;overflow:hidden">
+  <div class="T-stripe"></div>
+  <!-- Repeating tiled STROKE text bg -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+    <div class="STROKE" style="font-size:64px;line-height:1.1;white-space:nowrap;opacity:.25;animation:MARQUEE 8s linear infinite;display:flex;gap:0;width:max-content">
+      <span>EXECUTION_FAILED_EXECUTION_FAILED_EXECUTION_FAILED_</span>
+      <span>EXECUTION_FAILED_EXECUTION_FAILED_EXECUTION_FAILED_</span>
+    </div>
+    <div class="STROKE" style="font-size:64px;line-height:1.1;white-space:nowrap;opacity:.18;animation:MARQUEE 10s linear infinite reverse;display:flex;gap:0;width:max-content;margin-top:4px">
+      <span>BLOCKED_ERROR_BLOCKED_ERROR_BLOCKED_ERROR_BLOCKED_ERROR_</span>
+      <span>BLOCKED_ERROR_BLOCKED_ERROR_BLOCKED_ERROR_BLOCKED_ERROR_</span>
+    </div>
+    <div class="STROKE-coral" style="font-size:64px;line-height:1.1;white-space:nowrap;opacity:.2;animation:MARQUEE 9s linear 0.5s infinite;display:flex;gap:0;width:max-content;margin-top:4px">
+      <span>EXECUTION_FAILED_EXECUTION_FAILED_EXECUTION_FAILED_</span>
+      <span>EXECUTION_FAILED_EXECUTION_FAILED_EXECUTION_FAILED_</span>
+    </div>
+  </div>
+
+  <!-- Corner data clusters -->
+  <div class="DC" style="position:absolute;top:36px;left:16px">
+    <div class="DC-border">
+      <b>anRTKL</b> a006 <b style="font-family:var(--disp);font-weight:700;font-size:12px">LATCH</b><br>
+      PULL <span style="color:var(--lime)">●</span> KL2 KL4
+    </div>
+  </div>
+  <div class="DC" style="position:absolute;bottom:16px;right:16px">
+    <div class="DC-border">
+      <b>anRTKL</b> a006 <b style="font-family:var(--disp);font-weight:700;font-size:12px">LATCH</b><br>
+      PULL <span style="color:var(--lime)">●</span> KL2 KL4
+    </div>
+  </div>
+
+  <!-- Centre massive stamped word -->
+  <div style="position:relative;z-index:5;display:flex;align-items:center;justify-content:center;padding:48px 20px;flex-direction:column;gap:8px">
+    <div class="DISPLAY" id="FAIL-WORD" style="font-size:88px;color:var(--lime);text-align:center;animation:STAMP .3s steps(8) .1s both;opacity:0;text-shadow:0 0 40px rgba(143,255,0,.3)">FAILURE</div>
+    <div style="display:flex;gap:8px;justify-content:center;animation:SCAN .1s steps(4) .5s both;opacity:0">
+      <span class="TAG TAG-R">EXECUTION FAILED</span>
+      <span class="TAG TAG-D">DOCKER PUSH · REGISTRY TOKEN EXPIRED</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     04  MISSION CONTROL — with vertical labels + arc
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">04</span><span class="SD-t">MISSION CONTROL — :MC</span><div class="SD-r"></div></div>
+
+<div class="T">
+  <div class="T-stripe"></div>
+  <div class="T-bar"><div class="TD"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div><div class="T-title">ONI MISSION CONTROL · CONV_8FK2A9</div></div>
+  <div style="display:flex">
+
+    <!-- Left vertical strip -->
+    <div style="width:22px;background:var(--panel);border-right:1px solid var(--edge);display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:10px 0;flex-shrink:0">
+      <div class="VERT" style="font-size:8px;color:var(--amber);letter-spacing:.22em;opacity:.7">MISSION CTRL</div>
+      <div style="width:1px;flex:1;background:var(--edge);margin:8px 0"></div>
+      <div class="VERT" style="font-size:8px;color:var(--stone);letter-spacing:.2em">LIVE</div>
+    </div>
+
+    <div style="flex:1">
+      <!-- Stat bar: 4 giant numbers -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--edge);border-bottom:1px solid var(--edge)">
+        <div style="background:var(--ink);padding:12px 14px">
+          <div class="DISPLAY" style="font-size:36px;color:var(--lime);animation:STAMP .2s steps(6) .05s both;opacity:0">3</div>
+          <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)">RUNNING TASKS</div>
+        </div>
+        <div style="background:var(--ink);padding:12px 14px">
+          <div class="DISPLAY" style="font-size:36px;color:var(--bone);animation:STAMP .2s steps(6) .15s both;opacity:0">47.2K</div>
+          <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)">TOKENS USED</div>
+        </div>
+        <div style="background:var(--ink);padding:12px 14px">
+          <div class="DISPLAY" style="font-size:36px;color:var(--amber);animation:STAMP .2s steps(6) .25s both;opacity:0">1.8K</div>
+          <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)">TOK / MIN</div>
+        </div>
+        <div style="background:var(--ink);padding:12px 14px">
+          <div class="DISPLAY" style="font-size:36px;color:var(--bone);animation:STAMP .2s steps(6) .35s both;opacity:0">24</div>
+          <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)">TOOL CALLS</div>
+        </div>
+      </div>
+
+      <!-- Main panels grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--edge)">
+
+        <!-- Task queue -->
+        <div style="background:var(--ink);padding:14px 16px;border-right:1px solid var(--edge)">
+          <div style="font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);opacity:.65;margin-bottom:10px">TASK QUEUE</div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--edge);animation:BORDER-LIME 2s ease-in-out infinite">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--lime);animation:DOT-BEAT 2s ease-in-out infinite"></div>
+              <span style="flex:1;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--bone)">REFACTOR AUTH MIDDLEWARE</span>
+              <span class="TAG TAG-L" style="font-size:7px">RUNNING</span>
+              <span style="font-size:10px;color:var(--wire)">2M 14S</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--edge)">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--lime);animation:DOT-BEAT 2s ease-in-out .6s infinite"></div>
+              <span style="flex:1;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--bone)">GENERATE OPENAPI SCHEMA</span>
+              <span class="TAG TAG-L" style="font-size:7px">RUNNING</span>
+              <span style="font-size:10px;color:var(--wire)">0M 08S</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--edge)">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--amber)"></div>
+              <span style="flex:1;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ash)">DEPLOY STAGING — AWAITING CI</span>
+              <span class="TAG TAG-A" style="font-size:7px">BLOCKED</span>
+              <span style="font-size:10px;color:var(--wire)">—</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--edge)">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--coral)"></div>
+              <span style="flex:1;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ash)">LINT FIX — TSCONFIG PATHS</span>
+              <span class="TAG TAG-R" style="font-size:7px">ERROR</span>
+              <span style="font-size:10px;color:var(--wire)">—</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--wire)"></div>
+              <span style="flex:1;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--stone)">SCAFFOLD EXPRESS ROUTER</span>
+              <span class="TAG TAG-D" style="font-size:7px">DONE</span>
+              <span style="font-size:10px;color:var(--wire)">4M 02S</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right col: arc + context + agents -->
+        <div style="background:var(--ink);padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+
+          <!-- Context window with arc indicator -->
+          <div>
+            <div style="font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);opacity:.65;margin-bottom:10px">CONTEXT WINDOW</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <!-- Arc SVG — like the coral arc in screenshot 5 -->
+              <div style="position:relative;width:72px;height:72px;flex-shrink:0">
+                <svg viewBox="0 0 72 72" style="width:100%;height:100%;transform:rotate(-135deg)">
+                  <circle cx="36" cy="36" r="28" fill="none" stroke="var(--wire)" stroke-width="3" stroke-dasharray="176 176" stroke-dashoffset="0" stroke-linecap="round"/>
+                  <circle cx="36" cy="36" r="28" fill="none" stroke="var(--cyan)" stroke-width="3"
+                    stroke-dasharray="176 176"
+                    stroke-dashoffset="134"
+                    stroke-linecap="round"
+                    style="animation:ARC-DRAW .8s steps(20) .4s both;--full:176;--offset:134"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(0deg)">
+                  <div class="DISPLAY" style="font-size:18px;color:var(--cyan)">24%</div>
+                  <div style="font-size:7px;color:var(--stone);letter-spacing:.12em;text-transform:uppercase">TOK</div>
+                </div>
+              </div>
+              <div style="flex:1">
+                <div class="PB"><span class="PB-l">47.2K / 200K</span><div class="PB-t"><div class="PB-f" style="background:var(--cyan);animation:PB-IN .8s steps(20) .5s both;--w:24%;width:0"></div></div><span class="PB-v" style="color:var(--cyan)">24%</span></div>
+                <div class="PB"><span class="PB-l">BURN RATE</span><div class="PB-t"><div class="PB-f" style="background:var(--amber);animation:PB-IN .8s steps(20) .65s both,PULSE-O 1.2s ease-in-out 1.4s infinite;--w:62%;width:0"></div></div><span class="PB-v" style="color:var(--amber)">1.8K/M</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sync -->
+          <div>
+            <div style="font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);opacity:.65;margin-bottom:8px">CLAUDE.AI SYNC</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--edge)">
+              <div class="SW"><div class="SW-r"></div><div class="SW-c"></div></div>
+              <div>
+                <div style="font-size:11px;color:var(--bone);text-transform:uppercase;letter-spacing:.06em">SESSION LINKED</div>
+                <div style="font-size:9px;color:var(--stone);text-transform:uppercase;letter-spacing:.1em;margin-top:2px">LAST SYNC 3S AGO · CONV_8FK2A9</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-agents -->
+          <div>
+            <div style="font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);opacity:.65;margin-bottom:8px">SUB-AGENTS</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;justify-content:space-between;padding:5px 8px;border:1px solid rgba(123,94,167,.35);background:rgba(123,94,167,.08)"><span style="font-size:11px;color:var(--violet);text-transform:uppercase">[Σ] PLANNER</span><span style="font-size:9px;color:var(--lime);text-transform:uppercase">ACTIVE</span></div>
+              <div style="display:flex;justify-content:space-between;padding:5px 8px;border:1px solid rgba(0,212,200,.25);background:rgba(0,212,200,.06)"><span style="font-size:11px;color:var(--cyan);text-transform:uppercase">[⚡] EXECUTOR</span><span style="font-size:9px;color:var(--lime);text-transform:uppercase">ACTIVE</span></div>
+              <div style="display:flex;justify-content:space-between;padding:5px 8px;border:1px solid var(--edge)"><span style="font-size:11px;color:var(--stone);text-transform:uppercase">[⊘] CRITIC</span><span style="font-size:9px;color:var(--stone);text-transform:uppercase">IDLE</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tool log: full width -->
+        <div style="background:var(--ink);padding:14px 16px;border-top:1px solid var(--edge);grid-column:1/-1">
+          <div style="font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);opacity:.65;margin-bottom:8px">TOOL CALL LOG</div>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <div style="display:flex;gap:8px;padding:3px 6px;background:rgba(255,255,255,.015);align-items:baseline"><span style="font-size:9px;color:var(--wire);width:52px;flex-shrink:0">14:22:01</span><span style="color:var(--cyan);font-size:10px;text-transform:uppercase;letter-spacing:.06em;min-width:100px">READ_FILE</span><span style="font-size:10px;color:var(--stone);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">src/auth/middleware.ts</span><span style="font-size:9px;color:var(--wire)">12MS</span></div>
+            <div style="display:flex;gap:8px;padding:3px 6px;background:rgba(255,255,255,.015);align-items:baseline"><span style="font-size:9px;color:var(--wire);width:52px;flex-shrink:0">14:22:02</span><span style="color:var(--cyan);font-size:10px;text-transform:uppercase;letter-spacing:.06em;min-width:100px">BASH</span><span style="font-size:10px;color:var(--stone);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">npx tsc --noEmit</span><span style="font-size:9px;color:var(--wire)">340MS</span></div>
+            <div style="display:flex;gap:8px;padding:3px 6px;background:rgba(255,255,255,.015);align-items:baseline"><span style="font-size:9px;color:var(--wire);width:52px;flex-shrink:0">14:22:04</span><span style="color:var(--violet);font-size:10px;text-transform:uppercase;letter-spacing:.06em;min-width:100px">GITHUB:GET_RUN_LOGS</span><span style="font-size:10px;color:var(--stone);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">run_id=142 · job=test</span><span style="font-size:9px;color:var(--wire)">420MS</span></div>
+            <div style="display:flex;gap:8px;padding:3px 6px;background:rgba(255,255,255,.015);align-items:baseline"><span style="font-size:9px;color:var(--wire);width:52px;flex-shrink:0">14:22:06</span><span style="color:var(--cyan);font-size:10px;text-transform:uppercase;letter-spacing:.06em;min-width:100px">WRITE_FILE</span><span style="font-size:10px;color:var(--stone);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">src/auth/middleware.ts</span><span style="font-size:9px;color:var(--wire)">8MS</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     05  CRITIC VETO — massive REJECTED stamp
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">05</span><span class="SD-t">CRITIC VETO — REJECT + REPLAN</span><div class="SD-r"></div></div>
+
+<div class="T" id="S05">
+  <div class="T-stripe"></div>
+  <div class="T-bar"><div class="TD"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div><div class="T-title">CRITIC SUB-AGENT · VETO LOOP</div><button class="RPL" onclick="R('S05')">REPLAY</button></div>
+  <div style="display:flex">
+    <!-- Vertical critic label -->
+    <div style="width:22px;background:var(--panel);border-right:1px solid var(--edge);display:flex;align-items:center;justify-content:center;padding:10px 0;flex-shrink:0">
+      <div class="VERT" style="font-size:8px;color:var(--coral);letter-spacing:.22em;opacity:.8">CRITIC · ⊘</div>
+    </div>
+
+    <div class="T-body" id="B05" style="flex:1">
+      <div class="PS" style="margin-bottom:6px">
+        <span class="PS-you">YOU › </span>
+        <span style="color:var(--bone);text-transform:uppercase"> 403S ON POST /ORDERS IN STAGING. FIX FAST.</span>
+      </div>
+      <div style="margin:6px 0 4px"><span style="color:var(--violet);text-transform:uppercase;letter-spacing:.1em">[Σ PLANNER] </span><span style="color:var(--stone);font-size:11px;text-transform:uppercase"> 3 SUBTASKS · EXECUTING</span></div>
+      <div style="border-left:1px solid var(--edge);padding-left:10px;margin:4px 0 10px">
+        <div class="TL"><span class="TLb">TOOL</span><span class="TLn">READ_FILE</span><span class="TLa">.env.staging, .env.production</span><span class="TLms">6MS</span></div>
+        <div class="TL"><span class="TLb">TOOL</span><span class="TLn">WRITE_FILE</span><span class="TLa">.env.staging — JWT_SECRET updated</span><span class="TLms">5MS</span></div>
+      </div>
+      <div style="font-size:11px;color:var(--lime);margin:2px 0 12px;text-transform:uppercase;letter-spacing:.04em">↳ CURL → HTTP 201 CONFIRMED</div>
+
+      <!-- Hazard bar -->
+      <div style="height:5px;background:repeating-linear-gradient(90deg,var(--coral) 0,var(--coral) 8px,transparent 8px,transparent 16px);opacity:.4;margin-bottom:10px"></div>
+
+      <!-- REJECTED: massive label + detail -->
+      <div style="border:1px solid rgba(255,48,96,.35);background:rgba(255,48,96,.05);padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden;animation:VERDICT .3s steps(10) .1s both;opacity:0" id="VREJ">
+        <!-- Big stroke REJECTED behind content -->
+        <div class="STROKE-coral" style="position:absolute;right:-10px;bottom:-8px;font-size:52px;opacity:.15;pointer-events:none;font-family:var(--disp);font-weight:900;text-transform:uppercase;letter-spacing:-.02em">REJECTED</div>
+        <div style="position:relative;z-index:1">
+          <div class="DISPLAY" style="font-size:24px;color:var(--coral);margin-bottom:8px">[⊘ CRITIC] REJECTED <span class="TAG TAG-R" style="font-size:8px;vertical-align:middle;margin-left:6px">REPLAN 1/2</span></div>
+          <div style="font-size:12px;color:var(--fog);line-height:1.65;text-transform:uppercase;letter-spacing:.03em">
+            JWT_SECRET WRITTEN TO <span style="color:var(--cyan)">ENV.STAGING</span> IN PLAINTEXT. PATTERN FRAGILE — NEXT DEVELOPER COPIES FILE, SECRET LEAKS. ROOT CAUSE UNADDRESSED.
+          </div>
+          <div style="margin-top:10px;font-size:11px;text-transform:uppercase">
+            <span style="color:var(--coral)">REPLAN? </span>
+            <span class="KBD KBD-R">Y</span>
+            <span style="color:var(--stone)"> / N</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Replan -->
+      <div style="margin-bottom:4px;animation:SCAN .1s steps(3) 1.1s both;opacity:0"><span style="color:var(--violet);text-transform:uppercase;letter-spacing:.1em">[Σ PLANNER] </span><span style="color:var(--stone);font-size:11px;text-transform:uppercase"> REPLANNING — CI SECRET INJECTION</span></div>
+      <div style="border-left:1px solid var(--edge);padding-left:10px;margin:4px 0 10px;animation:SCAN .1s steps(3) 1.3s both;opacity:0">
+        <div class="TL"><span class="TLb">TOOL</span><span class="TLn">WRITE_FILE</span><span class="TLa">.github/workflows/deploy-staging.yml — JWT_SECRET via $secrets</span><span class="TLms">6MS</span></div>
+        <div class="TL"><span class="TLb">TOOL</span><span class="TLn">BASH</span><span class="TLa">sed -i '/JWT_SECRET/d' .env.staging</span><span class="TLms">12MS</span></div>
+      </div>
+
+      <!-- ACCEPTED -->
+      <div style="border:1px solid rgba(143,255,0,.3);background:rgba(143,255,0,.05);padding:12px 16px;animation:VERDICT .3s steps(10) 1.7s both;opacity:0">
+        <div class="DISPLAY" style="font-size:20px;color:var(--lime);margin-bottom:4px">[⊘ CRITIC] ACCEPTED</div>
+        <div style="font-size:11px;color:var(--stone);text-transform:uppercase;letter-spacing:.04em">SECRET IN CI ENV · STAGING FILE CLEAN · NO REGRESSIONS · CLEAN.</div>
+      </div>
+
+      <div style="border-top:1px solid var(--edge);padding-top:10px;margin-top:10px">
+        <div class="PS"><span class="PS-you">YOU › </span><div class="CUR"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     06  INLINE SHELL — "RESPONSE" vertical
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">06</span><span class="SD-t">INLINE SHELL — : PREFIX + RESPONSE LABEL</span><div class="SD-r"></div></div>
+
+<div class="T">
+  <div class="T-stripe"></div>
+  <div class="T-bar"><div class="TD"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div><div class="T-title">ZSH · ~/PROJECTS/ONI-API (MAIN)</div></div>
+  <div style="display:flex">
+    <div class="T-body" style="flex:1">
+      <div class="PS" style="margin-bottom:2px"><span class="PS-dir">~/PROJECTS/ONI-API</span><span class="PS-git"> (MAIN)</span><span class="PS-sym"> $ </span><span style="color:var(--bone);text-transform:uppercase">GIT DIFF --STAT HEAD~1</span></div>
+      <div style="color:var(--stone);font-size:11px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.03em">
+        &nbsp;SRC/AUTH/MIDDLEWARE.TS | 14 ++++++++------<br>
+        &nbsp;SRC/UTILS/JWT.TS       |  8 +++++---
+      </div>
+      <div class="PS" style="margin-bottom:8px"><span class="PS-dir">~/PROJECTS/ONI-API</span><span class="PS-git"> (MAIN)</span><span class="PS-sym"> $ </span><span style="color:var(--lime)">: </span><span style="color:var(--bone);text-transform:uppercase">WRITE A CHANGELOG ENTRY FOR THIS DIFF</span></div>
+      <div style="border-left:1px solid var(--edge);padding-left:10px;margin:4px 0 10px">
+        <div class="TL"><span class="TLb">TOOL</span><span class="TLn">READ_FILE</span><span class="TLa">src/auth/middleware.ts</span><span class="TLms">9MS</span></div>
+        <div class="TL"><span class="TLb">TOOL</span><span class="TLn">READ_FILE</span><span class="TLa">src/utils/jwt.ts</span><span class="TLms">7MS</span></div>
+      </div>
+      <div style="border:1px solid var(--edge);border-left:2px solid var(--lime);padding:10px 14px;margin:6px 0;background:rgba(143,255,0,.04)">
+        <div style="font-size:12px;line-height:1.75;color:var(--fog);text-transform:uppercase">
+          <span style="color:var(--bone)">### V0.4.1</span><br>
+          - REFACTORED <span style="color:var(--cyan)">AUTHMIDDLEWARE</span> TO ASYNC — ADDS <span style="color:var(--cyan)">PROMISE&lt;VOID&gt;</span> RETURN TYPE<br>
+          - EXTRACTED JWT VERIFICATION INTO <span style="color:var(--cyan)">VERIFYTOKEN</span> UTILITY<br>
+          - BEARER TOKEN PARSING HANDLES MALFORMED <span style="color:var(--cyan)">AUTHORIZATION</span> HEADERS
+        </div>
+      </div>
+      <div style="margin:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+        <span style="color:var(--lime)">WRITE TO CHANGELOG.MD? </span>
+        <span class="KBD KBD-L">Y</span> <span style="color:var(--stone)">/</span> <span class="KBD KBD-D">N</span>
+      </div>
+      <div class="PS"><span class="PS-dir">~/PROJECTS/ONI-API</span><span class="PS-git"> (MAIN)</span><span class="PS-sym"> $ </span><div class="CUR"></div></div>
+    </div>
+
+    <!-- Right: vertical "RESPONSE" label, like screenshot 2 -->
+    <div style="width:32px;background:var(--panel);border-left:1px solid var(--edge);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 0;flex-shrink:0;position:relative;overflow:hidden">
+      <!-- Stacked rectangles like screenshot 2 top-right -->
+      <div style="width:14px;height:4px;background:var(--lime);margin-bottom:3px;opacity:.7"></div>
+      <div style="width:14px;height:4px;background:var(--lime);margin-bottom:3px;opacity:.5"></div>
+      <div style="width:14px;height:4px;background:var(--lime);margin-bottom:12px;opacity:.3"></div>
+      <div class="VERT" style="font-size:10px;color:var(--lime);letter-spacing:.25em;font-weight:700">RESPONSE</div>
+      <div style="width:14px;height:4px;background:var(--lime);margin-top:12px;opacity:.3"></div>
+      <div style="width:14px;height:4px;background:var(--lime);margin-top:3px;opacity:.5"></div>
+      <div style="width:14px;height:4px;background:var(--lime);margin-top:3px;opacity:.7"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     07  PREFS — dot grid wireframe
+═══════════════════════════════════════════════════ -->
+<div class="SD"><span class="SD-n">07</span><span class="SD-t">ONI PREFS — LEARNED RULES</span><div class="SD-r"></div></div>
+
+<div class="T">
+  <div class="T-stripe"></div>
+  <div class="T-bar"><div class="TD"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div></div><div class="T-title">ONI PREFS LIST · 7 ACTIVE · 3 BELOW THRESHOLD</div></div>
+  <div style="display:flex">
+    <div style="width:22px;background:var(--panel);border-right:1px solid var(--edge);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:10px 0">
+      <div class="VERT" style="font-size:8px;color:var(--violet);letter-spacing:.22em;opacity:.7">PREFERENCES</div>
+    </div>
+    <div style="flex:1;position:relative;overflow:hidden">
+      <!-- Dot grid bg for wireframe feel -->
+      <div class="dot-grid-bg" style="position:absolute;inset:0;opacity:.3;pointer-events:none"></div>
+      <div class="T-body" style="position:relative;z-index:1">
+
+        <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:10px;border-bottom:1px solid var(--edge);margin-bottom:12px">
+          <div class="DISPLAY" style="font-size:28px;color:var(--bone)">LEARNED RULES</div>
+          <div style="font-size:9px;color:var(--stone);text-transform:uppercase;letter-spacing:.14em">7 ACTIVE · 3 BELOW THRESHOLD</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:3px">
+
+          <div class="PX" style="display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:8px 10px;align-items:center;border-left:2px solid var(--lime)">
+            <div>
+              <div style="font-size:11px;color:var(--fog);text-transform:uppercase;letter-spacing:.03em">WHEN DEBUGGING TYPESCRIPT, AUTO-RUN <span style="color:var(--cyan)">TSC --NOEMIT</span> BEFORE READ_FILE</div>
+              <div style="font-size:9px;color:var(--stone);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">INTENT=DEBUG · LANG=TYPESCRIPT · 38 OBS</div>
+            </div>
+            <div class="DISPLAY" style="font-size:20px;color:var(--lime)">94%</div>
+            <span class="TAG TAG-L" style="font-size:7px">ACTIVE</span>
+          </div>
+
+          <div class="PX" style="display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:8px 10px;align-items:center;border-left:2px solid var(--lime)">
+            <div>
+              <div style="font-size:11px;color:var(--fog);text-transform:uppercase;letter-spacing:.03em">SUPPRESS <span style="color:var(--cyan)">WEB_SEARCH</span> DURING DEBUG — PREFER LOCAL</div>
+              <div style="font-size:9px;color:var(--stone);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">TOOL=WEB_SEARCH · INTENT=DEBUG · 29 OBS</div>
+            </div>
+            <div class="DISPLAY" style="font-size:20px;color:var(--lime)">88%</div>
+            <span class="TAG TAG-L" style="font-size:7px">ACTIVE</span>
+          </div>
+
+          <div class="PX" style="display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:8px 10px;align-items:center;border-left:2px solid var(--amber)">
+            <div>
+              <div style="font-size:11px;color:var(--ash);text-transform:uppercase;letter-spacing:.03em">PROPOSE <span style="color:var(--cyan)">GIT DIFF --STAT</span> BEFORE COMMIT MESSAGES</div>
+              <div style="font-size:9px;color:var(--stone);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">INTENT=COMMIT · FILES_CHANGED&gt;3 · 14 OBS</div>
+            </div>
+            <div class="DISPLAY" style="font-size:20px;color:var(--amber)">71%</div>
+            <span class="TAG TAG-A" style="font-size:7px">LEARNING</span>
+          </div>
+
+        </div>
+
+        <div style="height:5px;background:repeating-linear-gradient(90deg,var(--lime) 0,var(--lime) 8px,transparent 8px,transparent 16px);opacity:.35;margin:12px 0 10px"></div>
+        <div style="font-size:10px;color:var(--stone);text-transform:uppercase;letter-spacing:.1em">
+          <span style="color:var(--lime)">ONI PREFS RESET</span> · <span style="color:var(--lime)">ONI PREFS EXPORT</span> · <span style="color:var(--lime)">ONI PREFS FORGET &lt;TOOL&gt;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="height:80px"></div>
+</div>
+
+<script>
+// Simple replay: remove and re-add animations
+function R(id) {
+  const body = document.getElementById('B' + id.slice(1));
+  if (!body) return;
+  // Clone and replace
+  const parent = body.parentNode;
+  const clone = body.cloneNode(true);
+  parent.replaceChild(clone, body);
+  clone.id = body.id;
+}
+// Also replay S01 which has no B prefix
+document.querySelectorAll('.RPL').forEach(btn => {
+  const id = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+  if (id === 'S01') {
+    btn.onclick = () => {
+      const t = document.getElementById('S01');
+      const newT = t.cloneNode(true);
+      t.parentNode.replaceChild(newT, t);
+      newT.id = 'S01';
+      newT.querySelector('.RPL').onclick = () => R('S01');
+    };
+  }
+});
+</script>
+</body>
+</html>
