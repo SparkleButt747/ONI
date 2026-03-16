@@ -29,7 +29,7 @@ export const color = {
   black: "#05050a",
   off: "#080810",
   border: "#1a1a38",
-  dim: "#3a3a6a",     // was #222244 — too dark for text, bumped to stone
+  dim: "#c07820",     // warm amber for secondary/inactive text — visible on dark bg
   muted: "#6060aa",
   text: "#8888cc",
   white: "#ccccff",

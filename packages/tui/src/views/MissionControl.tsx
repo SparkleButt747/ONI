@@ -94,9 +94,8 @@ export function MissionControl({ width }: MissionControlProps) {
         {/* 6. Hazard divider */}
         <HazardDivider width={width - 4} />
 
-        {/* Phase-gated features (Phase 4+) */}
-        <PhaseGate phase={4} feature="Preference learning — adaptive tool proposals" />
-        <PhaseGate phase={4} feature="MCP plugins — third-party tool ecosystem" />
+        {/* Phase-gated features */}
+        <PhaseGate phase={5} feature="MCP plugins — third-party tool ecosystem" />
       </Box>
     </Box>
   );

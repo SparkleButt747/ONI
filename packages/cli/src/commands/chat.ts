@@ -23,6 +23,9 @@ Examples:
 `,
   )
   .action(async (options) => {
+    // Clear terminal on launch
+    process.stdout.write("\x1b[2J\x1b[3J\x1b[H");
+
     const { resolveApiKey } = await import("@oni/auth");
     const { runAgent } = await import("@oni/agent");
     const { runWithSubAgents } = await import("@oni/agent/sub-agents");
