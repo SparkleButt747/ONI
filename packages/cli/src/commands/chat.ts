@@ -82,6 +82,17 @@ Examples:
 
     // Dispatch factory: creates a function bound to the ONI context
     // that streams agent events into the TUI state.
+    // Pre-import markdown renderer
+    let renderMd: ((text: string) => string) | null = null;
+    let hasMd: ((text: string) => boolean) | null = null;
+    try {
+      const md = await import("@oni/agent/render-markdown");
+      renderMd = md.renderMarkdown;
+      hasMd = md.hasMarkdown;
+    } catch {
+      // markdown rendering unavailable
+    }
+
     const createDispatch: CreateDispatchFn = (oni: ONIState) => {
       return async (message: string) => {
         insertMessage(db, conv.conv_id, "user", message);
@@ -207,6 +218,15 @@ Examples:
             }
             case "done": {
               if (fullResponse) {
+                // Render the final response as markdown for proper formatting
+                if (renderMd && hasMd && hasMd(fullResponse)) {
+                  const rendered = renderMd(fullResponse).trim();
+                  oni.updateLastMessage((prev) => ({
+                    ...prev,
+                    content: rendered,
+                  }));
+                }
+
                 insertMessage(db, conv.conv_id, "assistant", fullResponse);
 
                 const estimatedTokens = Math.ceil(fullResponse.length / 4);
@@ -215,7 +235,7 @@ Examples:
                   oni.addMessage({
                     id: `budget-${Date.now()}`,
                     role: "oni",
-                    content: `Budget exceeded. ${budget.summary().replace("\n", " | ")}`,
+                    content: `BUDGET EXCEEDED. ${budget.summary().replace("\n", " | ")}`,
                   });
                 }
 

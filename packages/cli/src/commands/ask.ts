@@ -69,6 +69,8 @@ Examples:
     };
 
     try {
+      let fullResponse = "";
+
       for await (const event of runAgent(fullMessage, conversation, {
         model,
         apiKey: resolved.key,
@@ -77,26 +79,39 @@ Examples:
       })) {
         switch (event.type) {
           case "text":
-            process.stdout.write(event.content ?? "");
+            fullResponse += event.content ?? "";
             break;
           case "tool_call":
             process.stderr.write(
-              `${c.cyan("[tool]")} ${c.cyan(event.tool ?? "")} ${c.muted(JSON.stringify(event.args ?? {}).slice(0, 80))}\n`,
+              `${c.cyan("[TOOL]")} ${c.cyan((event.tool ?? "").toUpperCase())} ${c.muted(JSON.stringify(event.args ?? {}).slice(0, 80))}\n`,
             );
             break;
           case "tool_result":
             if (event.isError) {
-              process.stderr.write(c.coral(`  error: ${(event.result ?? "").slice(0, 200)}\n`));
+              process.stderr.write(c.coral(`  ERROR: ${(event.result ?? "").slice(0, 200)}\n`));
             }
             break;
           case "error":
-            process.stderr.write(c.coral(`error: ${event.content}\n`));
+            process.stderr.write(c.coral(`ERROR: ${event.content}\n`));
             break;
           case "done":
             break;
         }
       }
-      process.stdout.write("\n");
+
+      // Render markdown for formatted output
+      if (fullResponse) {
+        try {
+          const { renderMarkdown, hasMarkdown } = await import("@oni/agent/render-markdown");
+          if (hasMarkdown(fullResponse)) {
+            process.stdout.write(renderMarkdown(fullResponse));
+          } else {
+            process.stdout.write(fullResponse + "\n");
+          }
+        } catch {
+          process.stdout.write(fullResponse + "\n");
+        }
+      }
     } catch (err) {
       console.error(`Error: ${(err as Error).message}`);
       process.exit(1);

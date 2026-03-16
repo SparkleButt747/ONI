@@ -10,10 +10,13 @@
     "./permissions": "./src/permissions.ts",
     "./budget": "./src/budget.ts",
     "./sub-agents": "./src/sub-agents.ts",
-    "./sub-agent-prompts": "./src/sub-agent-prompts.ts"
+    "./sub-agent-prompts": "./src/sub-agent-prompts.ts",
+    "./render-markdown": "./src/render-markdown.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "marked": "^15.0.12",
+    "marked-terminal": "^7.3.0",
     "zod": "^3.24.0",
     "zod-to-json-schema": "^3.24.0"
   }

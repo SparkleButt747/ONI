@@ -22,8 +22,10 @@ export interface StreamEvent {
   isError?: boolean;
 }
 
-const MAX_RETRIES = 3;
-const RETRY_DELAYS = [2000, 4000, 8000];
+// Stream-level retry: SDK handles 429/500/529 for non-streaming calls,
+// but streaming can fail mid-response. We retry the whole stream call.
+const STREAM_RETRIES = 3;
+const STREAM_DELAYS = [1000, 3000, 6000];
 
 function isRetryable(err: unknown): boolean {
   const msg = String((err as Error)?.message ?? err);
@@ -33,12 +35,10 @@ function isRetryable(err: unknown): boolean {
     msg.includes("overloaded") ||
     msg.includes("Internal server error") ||
     msg.includes("ECONNRESET") ||
-    msg.includes("socket hang up")
+    msg.includes("socket hang up") ||
+    msg.includes("ETIMEDOUT") ||
+    msg.includes("fetch failed")
   );
-}
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
 }
 
 export async function* runAgent(
@@ -46,7 +46,13 @@ export async function* runAgent(
   conversation: Conversation,
   config: AgentConfig,
 ): AsyncGenerator<StreamEvent> {
-  const client = new Anthropic({ apiKey: config.apiKey });
+  // SDK handles retry for 429/500/529 at the HTTP level with exponential backoff
+  const client = new Anthropic({
+    apiKey: config.apiKey,
+    maxRetries: 4,
+    timeout: 5 * 60 * 1000, // 5 min timeout
+  });
+
   const systemPrompt = buildSystemPrompt(config.projectDir, config.contextChunks);
   const tools = getAllToolSchemas();
 
@@ -56,13 +62,11 @@ export async function* runAgent(
   const maxRounds = config.maxToolRounds ?? 10;
 
   while (toolRounds < maxRounds) {
-    // Retry wrapper for the entire API call + stream consumption
     let finalMessage: Anthropic.Message | null = null;
-    let streamedText = "";
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    // Stream-level retry: the SDK doesn't auto-retry mid-stream failures
+    for (let attempt = 0; attempt < STREAM_RETRIES; attempt++) {
       try {
-        streamedText = "";
         const stream = client.messages.stream({
           model: config.model,
           max_tokens: 8192,
@@ -75,39 +79,37 @@ export async function* runAgent(
           if (event.type === "content_block_delta") {
             const delta = event.delta;
             if ("text" in delta && delta.text) {
-              streamedText += delta.text;
               yield { type: "text", content: delta.text };
             }
           }
         }
 
         finalMessage = await stream.finalMessage();
-        break; // Success — exit retry loop
+        break; // Success
       } catch (err) {
-        if (attempt < MAX_RETRIES - 1 && isRetryable(err)) {
-          const delay = RETRY_DELAYS[attempt];
+        if (attempt < STREAM_RETRIES - 1 && isRetryable(err)) {
+          const delay = STREAM_DELAYS[attempt];
           yield {
             type: "text",
-            content: `\n[API ERROR — RETRY ${attempt + 1}/${MAX_RETRIES} IN ${delay / 1000}S...]\n`,
+            content: `\n⟳ RETRYING (${attempt + 1}/${STREAM_RETRIES})...\n`,
           };
-          await sleep(delay);
+          await new Promise((r) => setTimeout(r, delay));
           continue;
         }
-        // Final attempt failed or non-retryable error
         yield {
           type: "error",
-          content: `API ERROR: ${(err as Error).message}`,
+          content: `${(err as Error).message}`,
         };
         return;
       }
     }
 
     if (!finalMessage) {
-      yield { type: "error", content: "API UNAVAILABLE AFTER RETRIES" };
+      yield { type: "error", content: "API UNAVAILABLE" };
       return;
     }
 
-    // Process the response
+    // Process response
     const toolUseBlocks: Array<{ id: string; name: string; input: unknown }> = [];
 
     for (const block of finalMessage.content) {
