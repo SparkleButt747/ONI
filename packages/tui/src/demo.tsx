@@ -2,4 +2,4 @@ import React from "react";
 import { render } from "ink";
 import { App } from "./app.js";
 
-render(<App />, { exitOnCtrlC: true });
+render(<App createDispatch={undefined} />, { exitOnCtrlC: true });

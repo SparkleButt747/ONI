@@ -51,6 +51,8 @@ export type ViewState = "boot" | "repl" | "mc";
 
 // --- Context shape ---
 
+export type DispatchFn = (message: string) => Promise<void>;
+
 export interface ONIState {
   view: ViewState;
   setView: (v: ViewState) => void;
@@ -69,11 +71,16 @@ export interface ONIState {
   addToolCall: (t: ToolCall) => void;
   messages: Message[];
   addMessage: (m: Message) => void;
+  updateLastMessage: (updater: (prev: Message) => Message) => void;
   activeDiff: DiffData | null;
   setActiveDiff: (d: DiffData | null) => void;
   setTokens: (n: number) => void;
   setBurnRate: (n: number) => void;
   setSyncStatus: (s: SyncStatus) => void;
+  dispatch: DispatchFn | null;
+  setDispatch: (fn: DispatchFn | null) => void;
+  isProcessing: boolean;
+  setIsProcessing: (v: boolean) => void;
 }
 
 const ONIContext = createContext<ONIState | null>(null);
@@ -84,7 +91,17 @@ export function useONI(): ONIState {
   return ctx;
 }
 
-export function ONIProvider({ children }: { children: ReactNode }) {
+export interface ONIProviderProps {
+  children: ReactNode;
+  convId?: string;
+  model?: string;
+}
+
+export function ONIProvider({
+  children,
+  convId: initialConvId = "conv_8fk2a9",
+  model: initialModel = "claude-sonnet-4-6",
+}: ONIProviderProps) {
   const [view, setView] = useState<ViewState>("boot");
   const [tokens, setTokens] = useState(0);
   const [burnRate, setBurnRate] = useState(0);
@@ -100,6 +117,8 @@ export function ONIProvider({ children }: { children: ReactNode }) {
   const [toolLog, setToolLog] = useState<ToolCall[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeDiff, setActiveDiff] = useState<DiffData | null>(null);
+  const [dispatch, setDispatch] = useState<DispatchFn | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const addToolCall = useCallback(
     (t: ToolCall) => setToolLog((prev) => [...prev, t]),
@@ -109,14 +128,24 @@ export function ONIProvider({ children }: { children: ReactNode }) {
     (m: Message) => setMessages((prev) => [...prev, m]),
     [],
   );
+  const updateLastMessage = useCallback(
+    (updater: (prev: Message) => Message) =>
+      setMessages((prev) => {
+        if (prev.length === 0) return prev;
+        const updated = [...prev];
+        updated[updated.length - 1] = updater(updated[updated.length - 1]);
+        return updated;
+      }),
+    [],
+  );
 
   return (
     <ONIContext.Provider
       value={{
         view,
         setView,
-        convId: "conv_8fk2a9",
-        model: "claude-sonnet-4-6",
+        convId: initialConvId,
+        model: initialModel,
         version: "0.1.0",
         tokens,
         maxTokens: 200_000,
@@ -130,11 +159,16 @@ export function ONIProvider({ children }: { children: ReactNode }) {
         addToolCall,
         messages,
         addMessage,
+        updateLastMessage,
         activeDiff,
         setActiveDiff,
         setTokens,
         setBurnRate,
         setSyncStatus,
+        dispatch,
+        setDispatch: (fn: DispatchFn | null) => setDispatch(() => fn),
+        isProcessing,
+        setIsProcessing,
       }}
     >
       {children}

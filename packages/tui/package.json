@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "exports": {
+    ".": "./src/demo.tsx",
+    "./app": "./src/app.tsx",
+    "./context": "./src/context/oni-context.tsx",
+    "./hooks": "./src/hooks/use-agent.ts",
+    "./components": "./src/components/index.ts",
+    "./theme": "./src/theme.ts"
+  },
   "scripts": {
     "demo": "tsx src/demo.tsx",
     "dev": "tsx watch src/demo.tsx"

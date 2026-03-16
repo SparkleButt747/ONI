@@ -5,17 +5,27 @@ import { HazardDivider } from "./components/index.js";
 import { ONIProvider, useONI } from "./context/oni-context.js";
 import { useTerminalSize } from "./hooks/use-terminal-size.js";
 import { useSimulatedEvents } from "./hooks/use-simulated-events.js";
+import { useAgent, type CreateDispatchFn } from "./hooks/use-agent.js";
 import { BootView } from "./views/BootView.js";
 import { REPLView } from "./views/REPLView.js";
 import { MissionControl } from "./views/MissionControl.js";
+import type { InitStep } from "./components/BootSequence.js";
 
-function AppInner() {
+interface AppInnerProps {
+  createDispatch: CreateDispatchFn | null;
+  bootSteps?: InitStep[];
+}
+
+function AppInner({ createDispatch, bootSteps }: AppInnerProps) {
   const oni = useONI();
   const { exit } = useApp();
   const { columns } = useTerminalSize();
 
-  // Start simulated events
-  useSimulatedEvents();
+  // Wire agent dispatch if provided, otherwise run demo simulation
+  useAgent(createDispatch);
+  if (!createDispatch) {
+    useSimulatedEvents();
+  }
 
   useInput((input, key) => {
     if (input === "q" && oni.view !== "repl") {
@@ -80,7 +90,7 @@ function AppInner() {
 
       {/* Main content */}
       <Box flexDirection="column" marginTop={oni.view === "boot" ? 0 : 1}>
-        {oni.view === "boot" && <BootView width={columns} />}
+        {oni.view === "boot" && <BootView width={columns} bootSteps={bootSteps} />}
         {oni.view === "repl" && <REPLView width={columns} />}
         {oni.view === "mc" && <MissionControl width={columns} />}
       </Box>
@@ -102,10 +112,20 @@ function AppInner() {
   );
 }
 
-export function App() {
+export interface AppProps {
+  createDispatch?: CreateDispatchFn;
+  convId?: string;
+  model?: string;
+  bootSteps?: InitStep[];
+}
+
+export function App({ createDispatch, convId, model, bootSteps }: AppProps) {
   return (
-    <ONIProvider>
-      <AppInner />
+    <ONIProvider convId={convId} model={model}>
+      <AppInner
+        createDispatch={createDispatch ?? null}
+        bootSteps={bootSteps}
+      />
     </ONIProvider>
   );
 }

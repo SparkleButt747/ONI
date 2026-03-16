@@ -8,6 +8,7 @@
     "@oni/agent": "*",
     "@oni/auth": "*",
     "@oni/db": "*",
+    "@oni/tui": "*",
     "commander": "^12.0.0",
     "chalk": "^5.4.0",
     "ink": "^6.0.0",

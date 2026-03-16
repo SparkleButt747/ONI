@@ -18,13 +18,39 @@ export function REPLView({ width }: REPLViewProps) {
   const oni = useONI();
 
   const handleSubmit = (text: string) => {
+    // Handle commands
+    if (text === ":q" || text === ":quit") {
+      process.exit(0);
+    }
+    if (text === ":mc") {
+      oni.setView("mc");
+      return;
+    }
+
+    // If a real dispatch function is wired up, use it
+    if (oni.dispatch) {
+      oni.addMessage({
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: text,
+      });
+      oni.dispatch(text).catch((err: Error) => {
+        oni.addMessage({
+          id: `err-${Date.now()}`,
+          role: "oni",
+          content: `Error: ${err.message}`,
+        });
+      });
+      return;
+    }
+
+    // Demo fallback: simulate a response
     oni.addMessage({
       id: `user-${Date.now()}`,
       role: "user",
       content: text,
     });
 
-    // Simulate a quick response after user input
     setTimeout(() => {
       oni.setAgentStates({
         planner: "active",
@@ -104,7 +130,7 @@ export function REPLView({ width }: REPLViewProps) {
       {/* Message history */}
       <Box flexDirection="column" marginTop={1}>
         {oni.messages.map((msg) => {
-          // For executor messages, show as "oni › [⚡]" then content below
+          // For executor messages, show as "oni > [lightning]" then content below
           if (msg.role === "oni" && msg.agent === "executor") {
             const execPrefix = subAgent.executor;
             return (
@@ -173,6 +199,14 @@ export function REPLView({ width }: REPLViewProps) {
         })}
       </Box>
 
+      {/* Thinking indicator */}
+      {oni.isProcessing && (
+        <Box marginTop={1}>
+          <Text color={color.amber}>{"oni › "}</Text>
+          <Text color={color.muted}>thinking...</Text>
+        </Box>
+      )}
+
       {/* Separator */}
       <Box marginTop={1}>
         <Text color={color.border}>
@@ -182,7 +216,7 @@ export function REPLView({ width }: REPLViewProps) {
 
       {/* Input */}
       <Box marginTop={1}>
-        <InputPrompt onSubmit={handleSubmit} />
+        <InputPrompt onSubmit={handleSubmit} isActive={!oni.isProcessing} />
       </Box>
     </Box>
   );
