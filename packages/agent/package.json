@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "exports": {
+    ".": "./src/client.ts",
+    "./tools": "./src/tools/index.ts",
+    "./conversation": "./src/conversation.ts",
+    "./permissions": "./src/permissions.ts"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "zod": "^3.24.0",

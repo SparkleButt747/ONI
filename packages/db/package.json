@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "exports": {
+    ".": "./src/database.ts",
+    "./queries": "./src/queries/index.ts"
+  },
   "dependencies": {
     "better-sqlite3": "^11.0.0"
   },
