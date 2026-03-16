@@ -4,25 +4,30 @@ import { color } from "../theme.js";
 import { HazardDivider } from "./HazardDivider.js";
 import { BootLogo } from "./BootLogo.js";
 
-interface InitStep {
+export interface InitStep {
   label: string;
   detail: string;
+  ok: boolean;
 }
 
-const INIT_STEPS: InitStep[] = [
-  { label: "init", detail: "OAuth token valid — expires in 47d" },
-  { label: "init", detail: "Project index loaded — 1,247 files · 18,432 symbols" },
-  { label: "init", detail: "Sync daemon running — conv_8fk2a9 linked" },
-  { label: "init", detail: "3 plugins loaded — github · npm · docker" },
-  { label: "init", detail: "7 learned rules active" },
+// Default steps for Phase 1
+const DEFAULT_STEPS: InitStep[] = [
+  { label: "auth", detail: "API key validated", ok: true },
+  { label: "db", detail: "SQLite database ready", ok: true },
+  { label: "tools", detail: "4 built-in tools loaded", ok: true },
 ];
 
 interface BootSequenceProps {
   width: number;
   onComplete: () => void;
+  steps?: InitStep[];
 }
 
-export function BootSequence({ width, onComplete }: BootSequenceProps) {
+export function BootSequence({
+  width,
+  onComplete,
+  steps = DEFAULT_STEPS,
+}: BootSequenceProps) {
   const [visibleSteps, setVisibleSteps] = useState(0);
   const [showHints, setShowHints] = useState(false);
 
@@ -30,14 +35,14 @@ export function BootSequence({ width, onComplete }: BootSequenceProps) {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    INIT_STEPS.forEach((_, i) => {
-      timers.push(setTimeout(() => setVisibleSteps(i + 1), 400 + i * 280));
+    steps.forEach((_, i) => {
+      timers.push(setTimeout(() => setVisibleSteps(i + 1), 300 + i * 250));
     });
-    const allDone = 400 + INIT_STEPS.length * 280;
-    timers.push(setTimeout(() => setShowHints(true), allDone + 200));
-    timers.push(setTimeout(stableOnComplete, allDone + 1000));
+    const allDone = 300 + steps.length * 250;
+    timers.push(setTimeout(() => setShowHints(true), allDone + 150));
+    timers.push(setTimeout(stableOnComplete, allDone + 800));
     return () => timers.forEach(clearTimeout);
-  }, [stableOnComplete]);
+  }, [stableOnComplete, steps]);
 
   return (
     <Box flexDirection="column" width={width}>
@@ -48,16 +53,18 @@ export function BootSequence({ width, onComplete }: BootSequenceProps) {
       <HazardDivider width={width} />
 
       <Box flexDirection="column" marginTop={1}>
-        {INIT_STEPS.slice(0, visibleSteps).map((step, i) => (
+        {steps.slice(0, visibleSteps).map((step, i) => (
           <Text key={`init-${i}`}>
             <Text color={color.muted}>{step.label.padEnd(6)}</Text>
-            <Text color={color.lime}>{"✓ "}</Text>
+            <Text color={step.ok ? color.lime : color.coral}>
+              {step.ok ? "✓ " : "✗ "}
+            </Text>
             <Text color={color.text}>{step.detail}</Text>
           </Text>
         ))}
       </Box>
 
-      {visibleSteps === INIT_STEPS.length && (
+      {visibleSteps === steps.length && (
         <Box marginTop={1}>
           <HazardDivider width={width} />
         </Box>
@@ -67,9 +74,7 @@ export function BootSequence({ width, onComplete }: BootSequenceProps) {
         <Box marginTop={1}>
           <Text color={color.muted}>
             Type a mission. <Text color={color.amber}>:q</Text> exit ·{" "}
-            <Text color={color.amber}>:mc</Text> mission control ·{" "}
-            <Text color={color.amber}>:diff</Text> review changes ·{" "}
-            <Text color={color.amber}>:tools</Text> plugins
+            <Text color={color.amber}>:mc</Text> mission control
           </Text>
         </Box>
       )}

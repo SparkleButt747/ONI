@@ -18,3 +18,5 @@ export { MessageBubble } from "./MessageBubble.js";
 export { CriticVeto } from "./CriticVeto.js";
 export { BlockedState } from "./BlockedState.js";
 export { ErrorState } from "./ErrorState.js";
+export { PhaseGate } from "./PhaseGate.js";
+export type { InitStep } from "./BootSequence.js";
