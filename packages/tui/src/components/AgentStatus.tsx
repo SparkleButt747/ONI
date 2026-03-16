@@ -34,6 +34,7 @@ export function AgentStatus({ states }: AgentStatusProps) {
               {cfg.prefix} {cfg.label}
             </Text>
             <Box flexGrow={1} />
+            <Text> </Text>
             <Text color={stateColor[state]}>
               {state.toUpperCase()}
             </Text>

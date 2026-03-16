@@ -32,21 +32,22 @@ export function MissionControl({ width }: MissionControlProps) {
     (t) => t.status === "RUNNING",
   ).length;
 
-  const halfWidth = Math.floor((width - 3) / 2);
+  // Quarter width for stat cards — leave room for borders
+  const cardW = Math.floor((width - 8) / 4);
 
   return (
     <Box flexDirection="column" width={width}>
-      {/* STAT CARDS */}
-      <Box gap={1} marginBottom={1}>
+      {/* STAT CARDS ROW */}
+      <Box gap={1}>
         <Box
           flexDirection="column"
           borderStyle="single"
           borderColor={color.border}
           paddingX={1}
-          width={Math.floor(width / 4)}
+          width={cardW}
         >
           <Text color={color.lime} bold>
-            {runningCount}
+            {String(runningCount)}
           </Text>
           <Text color={color.muted}>RUNNING TASKS</Text>
         </Box>
@@ -55,7 +56,7 @@ export function MissionControl({ width }: MissionControlProps) {
           borderStyle="single"
           borderColor={color.border}
           paddingX={1}
-          width={Math.floor(width / 4)}
+          width={cardW}
         >
           <Text color={color.white} bold>
             {tokStr}
@@ -67,7 +68,7 @@ export function MissionControl({ width }: MissionControlProps) {
           borderStyle="single"
           borderColor={color.border}
           paddingX={1}
-          width={Math.floor(width / 4)}
+          width={cardW}
         >
           <Text
             color={
@@ -88,10 +89,10 @@ export function MissionControl({ width }: MissionControlProps) {
           borderStyle="single"
           borderColor={color.border}
           paddingX={1}
-          width={Math.floor(width / 4)}
+          width={cardW}
         >
           <Text color={color.white} bold>
-            {oni.toolLog.length}
+            {String(oni.toolLog.length)}
           </Text>
           <Text color={color.muted}>TOOL CALLS</Text>
         </Box>
@@ -99,76 +100,58 @@ export function MissionControl({ width }: MissionControlProps) {
 
       <HazardDivider width={width} />
 
-      {/* MAIN PANELS — two columns */}
-      <Box marginTop={1}>
-        {/* LEFT: Task queue */}
-        <Box
-          flexDirection="column"
-          width={halfWidth}
-          borderRight
-          borderColor={color.border}
-          paddingRight={1}
-        >
-          <SectionHeader
-            title="Task queue"
-            accentColor={color.amber}
-          />
-          <Box marginTop={1} flexDirection="column">
-            <TaskQueue tasks={oni.tasks} />
-          </Box>
+      {/* TASK QUEUE — full width */}
+      <Box marginTop={1} flexDirection="column">
+        <SectionHeader title="Task queue" accentColor={color.amber} />
+        <Box marginTop={1}>
+          <TaskQueue tasks={oni.tasks} />
         </Box>
+      </Box>
 
-        {/* RIGHT: Sync + Context + Agents */}
-        <Box flexDirection="column" width={halfWidth} paddingLeft={1}>
-          {/* Sync */}
-          <SectionHeader
-            title="Claude.ai sync"
-            accentColor={color.lime}
+      <Box marginTop={1}>
+        <Text color={color.border}>
+          {"─".repeat(width)}
+        </Text>
+      </Box>
+
+      {/* SYNC + CONTEXT + AGENTS — stacked vertically */}
+      <Box marginTop={1} flexDirection="column">
+        <SectionHeader title="Claude.ai sync" accentColor={color.lime} />
+        <Box marginTop={1}>
+          <SyncPanel
+            status={oni.syncStatus}
+            convId={oni.convId}
+            lastSync="3s ago"
           />
-          <Box marginTop={1}>
-            <SyncPanel
-              status={oni.syncStatus}
-              convId={oni.convId}
-              lastSync="3s ago"
-            />
-          </Box>
+        </Box>
+      </Box>
 
-          {/* Context window */}
-          <Box marginTop={1} flexDirection="column">
-            <SectionHeader
-              title="Context window"
-              accentColor={color.warning}
-            />
-            <Box marginTop={1} flexDirection="column">
-              <ProgressBar
-                label={`${tokStr} / 200k tokens`}
-                value={oni.tokens / oni.maxTokens}
-                width={Math.min(20, halfWidth - 30)}
-                warnAt={0.6}
-                critAt={0.8}
-                valueLabel={`${Math.round((oni.tokens / oni.maxTokens) * 100)}%`}
-              />
-              <ProgressBar
-                label="burn rate"
-                value={Math.min(oni.burnRate / 5000, 1)}
-                width={Math.min(20, halfWidth - 30)}
-                warnAt={0.5}
-                critAt={0.75}
-                valueLabel={`${burnStr}/m`}
-              />
-            </Box>
-          </Box>
+      <Box marginTop={1} flexDirection="column">
+        <SectionHeader title="Context window" accentColor={color.warning} />
+        <Box marginTop={1} flexDirection="column">
+          <ProgressBar
+            label={`${tokStr} / 200k tokens`}
+            value={oni.tokens / oni.maxTokens}
+            width={Math.min(24, width - 30)}
+            warnAt={0.6}
+            critAt={0.8}
+            valueLabel={`${Math.round((oni.tokens / oni.maxTokens) * 100)}%`}
+          />
+          <ProgressBar
+            label="burn rate"
+            value={Math.min(oni.burnRate / 5000, 1)}
+            width={Math.min(24, width - 30)}
+            warnAt={0.5}
+            critAt={0.75}
+            valueLabel={`${burnStr}/m`}
+          />
+        </Box>
+      </Box>
 
-          {/* Sub-agents */}
-          <Box marginTop={1} flexDirection="column">
-            <SectionHeader
-              title="Sub-agents"
-              accentColor={color.violet}
-            />
-            <Box marginTop={1}>
-              <AgentStatus states={oni.agentStates} />
-            </Box>
-          </Box>
+      <Box marginTop={1} flexDirection="column">
+        <SectionHeader title="Sub-agents" accentColor={color.violet} />
+        <Box marginTop={1}>
+          <AgentStatus states={oni.agentStates} />
         </Box>
       </Box>
 

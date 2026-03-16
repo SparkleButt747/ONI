@@ -25,10 +25,12 @@ export function MessageBubble({ role, content, agent }: MessageBubbleProps) {
   return (
     <Box flexDirection="column" marginTop={1}>
       <Box>
-        <Text color={color.amber}>{"oni › "}</Text>
+        <Text color={color.amber} bold>
+          {"ONI › "}
+        </Text>
         {prefix && (
           <Text color={prefix.color} bold>
-            {prefix.prefix}{" "}
+            {prefix.prefix}
           </Text>
         )}
       </Box>
