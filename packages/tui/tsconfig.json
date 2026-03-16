@@ -1,15 +1,5 @@
 {
-  "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ES2022",
-    "jsx": "react-jsx",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "declaration": true
-  },
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "outDir": "dist", "rootDir": "src" },
   "include": ["src"]
 }

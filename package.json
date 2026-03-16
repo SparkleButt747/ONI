@@ -1,0 +1,19 @@
+{
+  "name": "oni",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc -b packages/*/tsconfig.json"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  }
+}
