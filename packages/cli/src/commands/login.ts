@@ -5,6 +5,15 @@ export const loginCommand = new Command("login")
   .description("Authenticate with your Anthropic API key")
   .option("--key <key>", "API key (alternatively prompted interactively)")
   .option("--from-claude-code", "Read token from Claude Code credentials")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ oni login                       Interactive prompt for API key
+  $ oni login --key sk-ant-...      Provide key directly
+  $ oni login --from-claude-code    Reuse Claude Code credentials
+`,
+  )
   .action(async (options) => {
     // Dynamic imports to avoid loading heavy deps on --help
     const { storeApiKey, hasApiKey, validateApiKey, findClaudeCodeToken } =

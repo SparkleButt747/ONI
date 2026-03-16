@@ -1,3 +1,7 @@
 node_modules/
 dist/
 *.tsbuildinfo
+*.db
+.oni/
+.DS_Store
+.playwright-mcp/

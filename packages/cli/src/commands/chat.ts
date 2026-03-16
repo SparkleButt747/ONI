@@ -8,9 +8,20 @@ export const chatCommand = new Command("chat")
   .option("--write", "Allow file writes")
   .option("--exec", "Allow bash execution")
   .option("--model <model>", "Model override")
-  .option("--agents", "Enable sub-agent loop (Planner → Executor → Critic)")
+  .option("--agents", "Enable sub-agent loop (Planner \u2192 Executor \u2192 Critic)")
   .option("--budget <tokens>", "Max tokens for this session (e.g. 50000)")
   .option("--monthly-limit <tokens>", "Monthly token limit")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ oni chat                              Read-only interactive session
+  $ oni chat --write --exec               Full access mode
+  $ oni chat --agents                     Multi-agent planning mode
+  $ oni chat --model claude-opus-4-6      Use a specific model
+  $ oni chat --budget 50000               Cap session at 50k tokens
+`,
+  )
   .action(async (options) => {
     const { resolveApiKey } = await import("@oni/auth");
     const { runAgent } = await import("@oni/agent");

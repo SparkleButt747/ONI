@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "bin": { "oni": "./src/index.ts" },
+  "bin": { "oni": "./bin/oni.mjs" },
   "dependencies": {
     "@oni/agent": "*",
     "@oni/auth": "*",

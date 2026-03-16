@@ -3,6 +3,13 @@ import chalk from "chalk";
 
 export const initCommand = new Command("init")
   .description("Index the current project for context-aware assistance")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ cd my-project && oni init       Index the current project
+`,
+  )
   .action(async () => {
     const { initIndex } = await import("@oni/context");
     const projectDir = process.cwd();

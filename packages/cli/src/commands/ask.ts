@@ -7,6 +7,16 @@ export const askCommand = new Command("ask")
   .option("--write", "Allow file writes")
   .option("--exec", "Allow bash execution")
   .option("--model <model>", "Model override")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ oni ask "what does this project do?"
+  $ oni ask --write "add error handling to src/index.ts"
+  $ cat src/utils.ts | oni ask "review this code"
+  $ git diff | oni ask "summarise these changes"
+`,
+  )
   .action(async (questionParts: string[], options) => {
     const { resolveApiKey } = await import("@oni/auth");
     const { runAgent } = await import("@oni/agent");
