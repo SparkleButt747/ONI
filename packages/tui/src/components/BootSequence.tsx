@@ -41,21 +41,8 @@ export function BootSequence({ width, onComplete }: BootSequenceProps) {
 
   return (
     <Box flexDirection="column" width={width}>
-      <Box flexDirection="row" gap={2} marginBottom={1}>
+      <Box marginBottom={1}>
         <BootLogo />
-        <Box
-          flexDirection="column"
-          justifyContent="flex-end"
-          borderLeft
-          borderColor={color.border}
-          paddingLeft={2}
-        >
-          <Text color={color.muted}>ONBOARD NEURAL INTELLIGENCE</Text>
-          <Text color={color.text}>
-            v0.1.0 · <Text color={color.cyan}>claude-sonnet-4-6</Text> ·
-            non-commercial
-          </Text>
-        </Box>
       </Box>
 
       <HazardDivider width={width} />

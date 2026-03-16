@@ -86,40 +86,20 @@ export function useSimulatedEvents() {
         agent: "planner",
         content:
           "Decomposing · 3 subtasks · tool budget: 8 · no ambiguity — proceeding",
+        toolCalls: [
+          { timestamp: "14:22:01", tool: "read_file", args: "src/services/PricingEngine.ts", latency: "9ms" },
+          { timestamp: "14:22:01", tool: "read_file", args: "src/services/OrderService.ts:processTotal", latency: "7ms" },
+          { timestamp: "14:22:04", tool: "bash", args: "npx jest PricingEngine --no-coverage 2>&1 | tail -20", latency: "1.4s" },
+        ],
       });
+      // Also add to global tool log for MC
+      oni.addToolCall({ timestamp: "14:22:01", tool: "read_file", args: "src/services/PricingEngine.ts", latency: "9ms" });
+      oni.addToolCall({ timestamp: "14:22:01", tool: "read_file", args: "src/services/OrderService.ts:processTotal", latency: "7ms" });
+      oni.addToolCall({ timestamp: "14:22:04", tool: "bash", args: "npx jest PricingEngine --no-coverage 2>&1 | tail -20", latency: "1.4s" });
       oni.setAgentStates({
         planner: "idle",
         executor: "active",
         critic: "idle",
-      });
-    });
-
-    at(5000, () => {
-      oni.addToolCall({
-        timestamp: "14:22:01",
-        tool: "read_file",
-        args: "src/services/PricingEngine.ts",
-        latency: "9ms",
-      });
-      oni.setTokens(8400);
-    });
-
-    at(5500, () => {
-      oni.addToolCall({
-        timestamp: "14:22:01",
-        tool: "read_file",
-        args: "src/services/OrderService.ts:processTotal",
-        latency: "7ms",
-      });
-      oni.setTokens(14200);
-    });
-
-    at(6000, () => {
-      oni.addToolCall({
-        timestamp: "14:22:04",
-        tool: "bash",
-        args: "npx jest PricingEngine --no-coverage 2>&1 | tail -20",
-        latency: "1.4s",
       });
       oni.setTokens(22800);
       oni.setBurnRate(1842);

@@ -55,9 +55,30 @@ async function main() {
         { id: "e2f3a4", mission: "Lint fix — tsconfig paths", status: "ERROR" },
         { id: "f1a2b3", mission: "Scaffold Express router", status: "DONE", elapsed: "4m 02s" },
       ]);
-      oni.addMessage({ id: "m1", role: "user", content: "the order total is wrong for discount codes" });
-      oni.addMessage({ id: "m2", role: "oni", agent: "planner", content: "Decomposing · 3 subtasks · budget: 8 · no ambiguity" });
-      oni.addMessage({ id: "m3", role: "oni", agent: "executor", content: "applyDiscount() runs post-tax. Swapping call order in processTotal()." });
+      oni.addMessage({ id: "m1", role: "user", content: "the order total is wrong for discount codes. look at the pricing engine and fix it" });
+      oni.addMessage({
+        id: "m2", role: "oni", agent: "planner",
+        content: "Decomposing · 3 subtasks · tool budget: 8 · no ambiguity — proceeding",
+        toolCalls: [
+          { timestamp: "14:22:01", tool: "read_file", args: "src/services/PricingEngine.ts", latency: "9ms" },
+          { timestamp: "14:22:01", tool: "read_file", args: "src/services/OrderService.ts:processTotal", latency: "7ms" },
+          { timestamp: "14:22:04", tool: "bash", args: "npx jest PricingEngine --no-coverage 2>&1 | tail -20", latency: "1.4s" },
+        ],
+      });
+      oni.addMessage({
+        id: "m3", role: "oni", agent: "executor",
+        content: "applyDiscount() runs after calculateTax() — discounts reduce post-tax total instead of pre-tax subtotal. Swapping call order in processTotal().",
+        diff: {
+          file: "src/services/OrderService.ts", additions: 2, deletions: 2,
+          lines: [
+            { type: "context", content: "  calculateSubtotal(items)", lineNum: 44 },
+            { type: "remove", content: "  applyDiscount(calculateTax(subtotal), code)", lineNum: 45 },
+            { type: "add", content: "  const discounted = applyDiscount(subtotal, code)", lineNum: 45 },
+            { type: "add", content: "  calculateTax(discounted)", lineNum: 46 },
+            { type: "context", content: "  return total", lineNum: 47 },
+          ],
+        },
+      });
       oni.addMessage({ id: "m4", role: "oni", agent: "critic", content: "output accepted · no regressions · tests cover this path · clean." });
       oni.addToolCall({ timestamp: "14:22:01", tool: "read_file", args: "src/services/PricingEngine.ts", latency: "9ms" });
       oni.addToolCall({ timestamp: "14:22:04", tool: "bash", args: "npx jest PricingEngine --no-coverage", latency: "1.4s" });
