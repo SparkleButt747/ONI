@@ -10,16 +10,30 @@ interface DiffLine {
 
 interface DiffViewProps {
   file: string;
+  additions?: number;
+  deletions?: number;
   lines: DiffLine[];
+  showActions?: boolean;
 }
 
-export function DiffView({ file, lines }: DiffViewProps) {
+export function DiffView({
+  file,
+  additions,
+  deletions,
+  lines,
+  showActions = false,
+}: DiffViewProps) {
+  const header = [file];
+  if (additions !== undefined || deletions !== undefined) {
+    const parts: string[] = [];
+    if (additions) parts.push(`+${additions}`);
+    if (deletions) parts.push(`-${deletions}`);
+    header.push(` · ${parts.join(" ")}`);
+  }
+
   return (
-    <Box flexDirection="column">
-      <Text color={color.muted}>
-        {"─── "}
-        <Text color={color.text}>{file}</Text>
-      </Text>
+    <Box flexDirection="column" borderLeft borderColor={color.amber} paddingLeft={1}>
+      <Text color={color.muted}>{header.join("")}</Text>
       {lines.map((line, i) => {
         let prefix: string;
         let lineColor: string;
@@ -38,17 +52,21 @@ export function DiffView({ file, lines }: DiffViewProps) {
             lineColor = color.dim;
         }
 
-        const num = line.lineNum?.toString().padStart(3, " ") ?? "   ";
-
         return (
           <Text key={`${line.type}-${line.lineNum ?? i}-${i}`}>
-            <Text color={color.dim}>{num} </Text>
             <Text color={lineColor}>
               {prefix} {line.content}
             </Text>
           </Text>
         );
       })}
+      {showActions && (
+        <Box marginTop={1} gap={1}>
+          <Text color={color.lime}>[accept]</Text>
+          <Text color={color.coral}>[reject]</Text>
+          <Text color={color.muted}>[accept file]</Text>
+        </Box>
+      )}
     </Box>
   );
 }

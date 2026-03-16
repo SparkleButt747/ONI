@@ -7,6 +7,7 @@ interface Task {
   id: string;
   mission: string;
   status: TaskStatus;
+  elapsed?: string;
   blocker?: string;
 }
 
@@ -21,21 +22,33 @@ export function TaskQueue({ tasks }: TaskQueueProps) {
 
   return (
     <Box flexDirection="column">
-      {tasks.map((task) => (
-        <Box key={task.id} gap={1}>
-          <StatusTag status={task.status} />
-          <Text color={color.muted}>{task.id.slice(0, 6)}</Text>
-          <Text color={color.text} wrap="truncate">
-            {task.mission}
-          </Text>
-          {task.blocker && (
-            <Text color={color.coral} dimColor>
-              {" "}
-              {task.blocker}
+      {tasks.map((task) => {
+        const dotColor = statusColor[task.status];
+        const textColor =
+          task.status === "DONE" || task.status === "ERROR"
+            ? color.dim
+            : color.text;
+
+        return (
+          <Box
+            key={task.id}
+            gap={1}
+            paddingY={0}
+            borderBottom
+            borderColor={color.border}
+          >
+            <Text color={dotColor}>{"●"}</Text>
+            <Text color={textColor} wrap="truncate">
+              {task.mission}
             </Text>
-          )}
-        </Box>
-      ))}
+            <Box flexGrow={1} />
+            <StatusTag status={task.status} />
+            <Text color={color.dim}>
+              {task.elapsed ?? "—"}
+            </Text>
+          </Box>
+        );
+      })}
     </Box>
   );
 }

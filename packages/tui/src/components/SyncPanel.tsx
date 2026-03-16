@@ -10,19 +10,20 @@ interface SyncPanelProps {
 
 export function SyncPanel({ status, convId, lastSync }: SyncPanelProps) {
   return (
-    <Box gap={2}>
-      <Text color={color.muted}>
-        SYNC{" "}
-        <Text color={syncColor[status]} bold>
-          {status === "LIVE" ? "● " : ""}
-          {status}
-        </Text>
+    <Box
+      borderStyle="single"
+      borderColor={color.border}
+      paddingX={1}
+      gap={1}
+    >
+      <Text color={syncColor[status]} bold>
+        {status === "LIVE" ? "● " : ""}
+        {status}
       </Text>
+      <Text color={color.white}>Session linked</Text>
+      <Box flexGrow={1} />
       <Text color={color.muted}>
-        CONV <Text color={color.text}>{convId}</Text>
-      </Text>
-      <Text color={color.muted}>
-        LAST <Text color={color.text}>{lastSync}</Text>
+        Last sync {lastSync} · {convId}
       </Text>
     </Box>
   );

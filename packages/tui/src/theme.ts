@@ -1,15 +1,16 @@
 // ONI Design System — Graphic Realism
-// Colour tokens, spacing, and semantic constants
+// Colour tokens from oni-terminal-ui.html reference
 
 export const color = {
-  // Base palette (near-black, not true black)
-  black: "#0a0a09",
-  panel: "#1a1a18",
-  border: "#2a2a27",
-  dim: "#3a3a37",
-  muted: "#6b6860",
-  text: "#c8c5bb",
-  white: "#ffffff",
+  // Base palette
+  black: "#080807",
+  off: "#111110",
+  panel: "#191917",
+  border: "#252523",
+  dim: "#323230",
+  muted: "#5a5855",
+  text: "#b8b5ac",
+  white: "#f0ede6",
 
   // Accent palette (semantic)
   amber: "#f5a623",
@@ -32,7 +33,7 @@ export type TaskStatus = "RUNNING" | "BLOCKED" | "ERROR" | "DONE" | "IDLE";
 
 export const statusColor: Record<TaskStatus, string> = {
   RUNNING: color.amber,
-  BLOCKED: color.coral,
+  BLOCKED: color.warning,
   ERROR: color.coral,
   DONE: color.lime,
   IDLE: color.muted,
@@ -42,14 +43,7 @@ export type SyncStatus = "LIVE" | "STALE" | "ERROR" | "LOCAL";
 
 export const syncColor: Record<SyncStatus, string> = {
   LIVE: color.lime,
-  STALE: color.amber,
+  STALE: color.warning,
   ERROR: color.coral,
   LOCAL: color.muted,
 };
-
-export const space = {
-  xs: 1,
-  sm: 1,
-  md: 2,
-  lg: 3,
-} as const;

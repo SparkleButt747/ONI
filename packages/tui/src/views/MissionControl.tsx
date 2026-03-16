@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Text } from "ink";
 import { color } from "../theme.js";
 import {
-  StatBar,
   HazardDivider,
   SectionHeader,
   TaskQueue,
@@ -12,187 +11,209 @@ import {
   SyncPanel,
   ProgressBar,
 } from "../components/index.js";
+import { useONI } from "../context/oni-context.js";
 
 interface MissionControlProps {
   width: number;
 }
 
 export function MissionControl({ width }: MissionControlProps) {
+  const oni = useONI();
+
+  const tokStr =
+    oni.tokens >= 1000
+      ? `${(oni.tokens / 1000).toFixed(1)}k`
+      : `${oni.tokens}`;
+  const burnStr =
+    oni.burnRate >= 1000
+      ? `${(oni.burnRate / 1000).toFixed(1)}k`
+      : `${oni.burnRate}`;
+  const runningCount = oni.tasks.filter(
+    (t) => t.status === "RUNNING",
+  ).length;
+
+  const halfWidth = Math.floor((width - 3) / 2);
+
   return (
     <Box flexDirection="column" width={width}>
-      {/* STAT BAR */}
-      <StatBar
-        version="0.1.0"
-        convId="8fk2a"
-        tokens="47.2k"
-        runningTasks={3}
-        toolCalls={14}
-        burnRate={1842}
-        syncStatus="LIVE"
-        model="sonnet-4.6"
-      />
+      {/* STAT CARDS */}
+      <Box gap={1} marginBottom={1}>
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          borderColor={color.border}
+          paddingX={1}
+          width={Math.floor(width / 4)}
+        >
+          <Text color={color.lime} bold>
+            {runningCount}
+          </Text>
+          <Text color={color.muted}>RUNNING TASKS</Text>
+        </Box>
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          borderColor={color.border}
+          paddingX={1}
+          width={Math.floor(width / 4)}
+        >
+          <Text color={color.white} bold>
+            {tokStr}
+          </Text>
+          <Text color={color.muted}>TOKENS USED</Text>
+        </Box>
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          borderColor={color.border}
+          paddingX={1}
+          width={Math.floor(width / 4)}
+        >
+          <Text
+            color={
+              oni.burnRate > 5000
+                ? color.coral
+                : oni.burnRate > 2000
+                  ? color.warning
+                  : color.white
+            }
+            bold
+          >
+            {burnStr}
+          </Text>
+          <Text color={color.muted}>TOK / MIN</Text>
+        </Box>
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          borderColor={color.border}
+          paddingX={1}
+          width={Math.floor(width / 4)}
+        >
+          <Text color={color.white} bold>
+            {oni.toolLog.length}
+          </Text>
+          <Text color={color.muted}>TOOL CALLS</Text>
+        </Box>
+      </Box>
 
       <HazardDivider width={width} />
 
-      {/* SUB-AGENT STATUS */}
-      <Box flexDirection="column" paddingY={1}>
-        <SectionHeader title="Sub-agent status" accentColor={color.violet} />
-        <Box marginTop={1}>
-          <AgentStatus
-            states={{
-              planner: "idle",
-              executor: "active",
-              critic: "idle",
-            }}
+      {/* MAIN PANELS — two columns */}
+      <Box marginTop={1}>
+        {/* LEFT: Task queue */}
+        <Box
+          flexDirection="column"
+          width={halfWidth}
+          borderRight
+          borderColor={color.border}
+          paddingRight={1}
+        >
+          <SectionHeader
+            title="Task queue"
+            accentColor={color.amber}
           />
+          <Box marginTop={1} flexDirection="column">
+            <TaskQueue tasks={oni.tasks} />
+          </Box>
+        </Box>
+
+        {/* RIGHT: Sync + Context + Agents */}
+        <Box flexDirection="column" width={halfWidth} paddingLeft={1}>
+          {/* Sync */}
+          <SectionHeader
+            title="Claude.ai sync"
+            accentColor={color.lime}
+          />
+          <Box marginTop={1}>
+            <SyncPanel
+              status={oni.syncStatus}
+              convId={oni.convId}
+              lastSync="3s ago"
+            />
+          </Box>
+
+          {/* Context window */}
+          <Box marginTop={1} flexDirection="column">
+            <SectionHeader
+              title="Context window"
+              accentColor={color.warning}
+            />
+            <Box marginTop={1} flexDirection="column">
+              <ProgressBar
+                label={`${tokStr} / 200k tokens`}
+                value={oni.tokens / oni.maxTokens}
+                width={Math.min(20, halfWidth - 30)}
+                warnAt={0.6}
+                critAt={0.8}
+                valueLabel={`${Math.round((oni.tokens / oni.maxTokens) * 100)}%`}
+              />
+              <ProgressBar
+                label="burn rate"
+                value={Math.min(oni.burnRate / 5000, 1)}
+                width={Math.min(20, halfWidth - 30)}
+                warnAt={0.5}
+                critAt={0.75}
+                valueLabel={`${burnStr}/m`}
+              />
+            </Box>
+          </Box>
+
+          {/* Sub-agents */}
+          <Box marginTop={1} flexDirection="column">
+            <SectionHeader
+              title="Sub-agents"
+              accentColor={color.violet}
+            />
+            <Box marginTop={1}>
+              <AgentStatus states={oni.agentStates} />
+            </Box>
+          </Box>
         </Box>
       </Box>
 
-      {/* TASK QUEUE */}
-      <Box flexDirection="column" paddingY={1}>
-        <SectionHeader title="Task queue" accentColor={color.amber} />
-        <Box marginTop={1} flexDirection="column">
-          <TaskQueue
-            tasks={[
-              {
-                id: "a3f82e",
-                mission: "refactor auth middleware to async/await",
-                status: "RUNNING",
-              },
-              {
-                id: "b7c1d4",
-                mission: "add JSDoc to exported functions in services/",
-                status: "RUNNING",
-              },
-              {
-                id: "e9f0a2",
-                mission: "fix race condition in PricingEngine",
-                status: "BLOCKED",
-                blocker: "CI requires approval",
-              },
-              {
-                id: "d4e5f6",
-                mission: "update deps to latest semver",
-                status: "DONE",
-              },
-              {
-                id: "c2d3e4",
-                mission: "migrate fetch() calls to ky",
-                status: "ERROR",
-              },
-            ]}
-          />
-        </Box>
-      </Box>
+      <HazardDivider width={width} />
 
-      {/* TOOL CALL LOG */}
-      <Box flexDirection="column" paddingY={1}>
+      {/* TOOL LOG */}
+      <Box marginTop={1} flexDirection="column">
         <SectionHeader title="Tool call log" accentColor={color.cyan} />
         <Box marginTop={1} flexDirection="column">
-          <ToolCallLine
-            timestamp="14:22:01"
-            tool="read_file"
-            args="src/services/PricingEngine.ts"
-            latency="4ms"
-          />
-          <ToolCallLine
-            timestamp="14:22:01"
-            tool="read_file"
-            args="src/services/OrderService.ts:processTotal"
-            latency="3ms"
-          />
-          <ToolCallLine
-            timestamp="14:22:04"
-            tool="bash"
-            args="npx jest PricingEngine --watch=false"
-            latency="1.2s"
-          />
-          <ToolCallLine
-            timestamp="14:22:06"
-            tool="write_file"
-            args="src/services/PricingEngine.ts"
-            latency="2ms"
-          />
-          <ToolCallLine
-            timestamp="14:22:08"
-            tool="bash"
-            args="npx jest PricingEngine --watch=false"
-            latency="1.1s"
-          />
-          <ToolCallLine
-            timestamp="14:22:10"
-            tool="create_pr"
-            args="--title 'fix: discount applied pre-tax'"
-            latency="842ms"
-            plugin="github"
-          />
+          {oni.toolLog.length === 0 ? (
+            <Text color={color.dim}>No tool calls yet.</Text>
+          ) : (
+            oni.toolLog.slice(-8).map((tc, i) => (
+              <ToolCallLine
+                key={`mc-tl-${i}`}
+                timestamp={tc.timestamp}
+                tool={tc.tool}
+                args={tc.args}
+                latency={tc.latency}
+                plugin={tc.plugin}
+                status={tc.status}
+              />
+            ))
+          )}
         </Box>
       </Box>
 
       {/* ACTIVE DIFF */}
-      <Box flexDirection="column" paddingY={1}>
-        <SectionHeader title="Active diff" accentColor={color.lime} />
+      {oni.activeDiff && (
         <Box marginTop={1} flexDirection="column">
-          <DiffView
-            file="src/services/PricingEngine.ts"
-            lines={[
-              {
-                type: "context",
-                content: "export function processTotal(items: LineItem[], discount: Discount) {",
-                lineNum: 44,
-              },
-              {
-                type: "context",
-                content: "  const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);",
-                lineNum: 45,
-              },
-              {
-                type: "remove",
-                content: "  const taxed = calculateTax(subtotal);",
-                lineNum: 46,
-              },
-              {
-                type: "remove",
-                content: "  return applyDiscount(taxed, discount);",
-                lineNum: 47,
-              },
-              {
-                type: "add",
-                content: "  const discounted = applyDiscount(subtotal, discount);",
-                lineNum: 46,
-              },
-              {
-                type: "add",
-                content: "  return calculateTax(discounted);",
-                lineNum: 47,
-              },
-            ]}
+          <SectionHeader
+            title={`Active diff — ${oni.activeDiff.file}`}
+            accentColor={color.lime}
           />
+          <Box marginTop={1}>
+            <DiffView
+              file={oni.activeDiff.file}
+              additions={oni.activeDiff.additions}
+              deletions={oni.activeDiff.deletions}
+              lines={oni.activeDiff.lines}
+              showActions
+            />
+          </Box>
         </Box>
-      </Box>
-
-      {/* CONTEXT WINDOW + SYNC */}
-      <Box flexDirection="column" paddingY={1}>
-        <SectionHeader title="Context window" accentColor={color.warning} />
-        <Box marginTop={1} flexDirection="column" gap={1}>
-          <ProgressBar
-            label="tokens"
-            value={0.47}
-            width={Math.min(40, width - 4)}
-          />
-          <ProgressBar
-            label="burn rate"
-            value={0.37}
-            width={Math.min(40, width - 4)}
-            warnAt={0.5}
-            critAt={0.75}
-          />
-        </Box>
-      </Box>
-
-      <Box paddingY={1}>
-        <SyncPanel status="LIVE" convId="conv_8fk2a" lastSync="14:22:10" />
-      </Box>
+      )}
     </Box>
   );
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Text } from "ink";
+import { Text } from "ink";
 import { type TaskStatus, statusColor, color } from "../theme.js";
 
 interface StatusTagProps {
@@ -11,13 +11,11 @@ export function StatusTag({ status }: StatusTagProps) {
   const isError = status === "ERROR";
 
   return (
-    <Box>
-      <Text
-        color={isError ? color.black : c}
-        backgroundColor={isError ? c : undefined}
-      >
-        {` ${status} `}
-      </Text>
-    </Box>
+    <Text
+      color={isError ? color.black : c}
+      backgroundColor={isError ? c : undefined}
+    >
+      {` ${status} `}
+    </Text>
   );
 }

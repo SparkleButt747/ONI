@@ -9,23 +9,34 @@ interface AgentStatusProps {
 }
 
 const stateColor: Record<AgentState, string> = {
-  active: color.amber,
-  idle: color.dim,
+  active: color.lime,
+  idle: color.muted,
   reviewing: color.warning,
 };
 
 export function AgentStatus({ states }: AgentStatusProps) {
   return (
-    <Box gap={2}>
+    <Box flexDirection="column" gap={0}>
       {(Object.keys(states) as AgentRole[]).map((role) => {
         const cfg = subAgent[role];
         const state = states[role];
+        const isActive = state === "active";
+        const borderCol = isActive ? cfg.color : color.border;
+
         return (
-          <Box key={role} gap={1}>
-            <Text color={cfg.color} bold>
-              {cfg.prefix}
+          <Box
+            key={role}
+            borderStyle="single"
+            borderColor={borderCol}
+            paddingX={1}
+          >
+            <Text color={isActive ? cfg.color : color.muted}>
+              {cfg.prefix} {cfg.label}
             </Text>
-            <Text color={stateColor[state]}>{state.toUpperCase()}</Text>
+            <Box flexGrow={1} />
+            <Text color={stateColor[state]}>
+              {state.toUpperCase()}
+            </Text>
           </Box>
         );
       })}
