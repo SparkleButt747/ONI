@@ -4,17 +4,33 @@ import chalk from "chalk";
 export const loginCommand = new Command("login")
   .description("Authenticate with your Anthropic API key")
   .option("--key <key>", "API key (alternatively prompted interactively)")
+  .option("--from-claude-code", "Read token from Claude Code credentials")
   .action(async (options) => {
     // Dynamic imports to avoid loading heavy deps on --help
-    const { storeApiKey, hasApiKey, validateApiKey } = await import("@oni/auth");
+    const { storeApiKey, hasApiKey, validateApiKey, findClaudeCodeToken } =
+      await import("@oni/auth");
 
     const already = await hasApiKey();
-    if (already && !options.key) {
+    if (already && !options.key && !options.fromClaudeCode) {
       console.log(chalk.hex("#e8c547")("Already authenticated. Re-run with --key to update."));
       return;
     }
 
     let key = options.key as string | undefined;
+
+    if (options.fromClaudeCode) {
+      const ccToken = findClaudeCodeToken();
+      if (!ccToken) {
+        console.error(
+          chalk.hex("#ff4d2e")(
+            "No Claude Code credentials found. Is Claude Code installed and logged in?",
+          ),
+        );
+        process.exit(1);
+      }
+      key = ccToken;
+      console.log(chalk.hex("#5a5855")("Found Claude Code token."));
+    }
 
     if (!key) {
       // Read from stdin interactively

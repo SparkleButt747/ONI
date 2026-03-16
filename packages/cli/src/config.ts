@@ -5,6 +5,7 @@ import { homedir } from "node:os";
 export interface OniConfig {
   model: string;
   contextBudget: number;
+  monthlyTokenLimit: number;
   verbosity: "silent" | "normal" | "verbose";
   dryRunDefault: boolean;
   colors: boolean;
@@ -13,6 +14,7 @@ export interface OniConfig {
 const DEFAULTS: OniConfig = {
   model: "claude-sonnet-4-6",
   contextBudget: 80_000,
+  monthlyTokenLimit: 0,
   verbosity: "normal",
   dryRunDefault: true,
   colors: true,

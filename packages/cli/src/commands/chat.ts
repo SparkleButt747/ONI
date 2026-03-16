@@ -8,18 +8,21 @@ export const chatCommand = new Command("chat")
   .option("--write", "Allow file writes")
   .option("--exec", "Allow bash execution")
   .option("--model <model>", "Model override")
+  .option("--budget <tokens>", "Max tokens for this session (e.g. 50000)")
+  .option("--monthly-limit <tokens>", "Monthly token limit")
   .action(async (options) => {
     const { resolveApiKey } = await import("@oni/auth");
     const { runAgent } = await import("@oni/agent");
     const { Conversation } = await import("@oni/agent/conversation");
     const { createPermissions } = await import("@oni/agent/permissions");
+    const { BudgetTracker } = await import("@oni/agent/budget");
     const { createDatabase } = await import("@oni/db");
     const { createConversation, insertMessage, touchConversation } = await import("@oni/db/queries");
     const { loadConfig, getDataDir } = await import("../config.js");
     const { join } = await import("node:path");
 
-    const apiKey = await resolveApiKey();
-    if (!apiKey) {
+    const resolved = await resolveApiKey();
+    if (!resolved) {
       console.error(chalk.hex("#ff4d2e")("No API key found. Run `oni login` or set ANTHROPIC_API_KEY."));
       process.exit(1);
     }
@@ -33,6 +36,13 @@ export const chatCommand = new Command("chat")
       allowExec: options.exec as boolean,
       projectDir,
     });
+
+    // Budget tracking
+    const sessionLimit = options.budget ? Number(options.budget) : 0;
+    const monthlyLimit = options.monthlyLimit
+      ? Number(options.monthlyLimit)
+      : config.monthlyTokenLimit ?? 0;
+    const budget = new BudgetTracker({ sessionLimit, monthlyLimit });
 
     // Init DB
     const dbPath = join(getDataDir(), "oni.db");
@@ -61,6 +71,12 @@ export const chatCommand = new Command("chat")
     if (options.exec) flags.push(c.lime("--exec"));
     if (flags.length === 0) flags.push(c.muted("read-only"));
     console.log(c.muted("permissions: ") + flags.join(" "));
+    if (sessionLimit > 0) {
+      console.log(c.muted(`budget: ${sessionLimit} tok/session`));
+    }
+    if (monthlyLimit > 0) {
+      console.log(c.muted(`monthly limit: ${monthlyLimit} tok`));
+    }
     console.log(c.dim("─".repeat(60)));
     console.log(c.muted(":q to quit"));
     console.log();
@@ -88,7 +104,7 @@ export const chatCommand = new Command("chat")
       try {
         const agentConfig = {
           model,
-          apiKey,
+          apiKey: resolved.key,
           projectDir,
           permissions,
         };
@@ -119,6 +135,19 @@ export const chatCommand = new Command("chat")
               break;
             case "done":
               break;
+          }
+        }
+
+        // Estimate tokens from response length as fallback (rough: 1 tok ~= 4 chars)
+        if (fullResponse.length > 0) {
+          const estimatedTokens = Math.ceil(fullResponse.length / 4);
+          const withinBudget = budget.record(estimatedTokens);
+          if (!withinBudget) {
+            process.stdout.write(
+              `\n${c.coral("Budget exceeded.")} ${c.muted(budget.summary().replace("\n", " | "))}\n`,
+            );
+            process.stdout.write("\n");
+            break;
           }
         }
 

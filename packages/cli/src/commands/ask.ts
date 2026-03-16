@@ -14,8 +14,8 @@ export const askCommand = new Command("ask")
     const { createPermissions } = await import("@oni/agent/permissions");
     const { loadConfig } = await import("../config.js");
 
-    const apiKey = await resolveApiKey();
-    if (!apiKey) {
+    const resolved = await resolveApiKey();
+    if (!resolved) {
       console.error("No API key. Run `oni login` or set ANTHROPIC_API_KEY.");
       process.exit(1);
     }
@@ -61,7 +61,7 @@ export const askCommand = new Command("ask")
     try {
       for await (const event of runAgent(fullMessage, conversation, {
         model,
-        apiKey,
+        apiKey: resolved.key,
         projectDir,
         permissions,
       })) {
