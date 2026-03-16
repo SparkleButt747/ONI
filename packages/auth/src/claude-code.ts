@@ -1,40 +1,86 @@
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import { homedir } from "node:os";
+import { execSync } from "node:child_process";
+import { platform, userInfo } from "node:os";
 
 /**
- * Attempts to read Claude Code's stored OAuth token.
+ * Reads Claude Code's stored OAuth token from the OS keychain.
  * This is for personal use only — the user already owns the Claude Code session.
- * ONI reads the same developer's own credentials from their own tool.
+ *
+ * Claude Code stores credentials in the macOS keychain under:
+ *   service: "Claude Code-credentials"
+ *   account: <username>
+ *   value: JSON with { claudeAiOauth: { accessToken: "sk-ant-oat01-..." } }
  */
 
-const CREDENTIAL_PATHS = [
-  // Claude Code stores credentials in various locations depending on platform/version
-  join(homedir(), ".claude", "credentials.json"),
-  join(homedir(), ".config", "claude", "credentials.json"),
-  join(homedir(), ".claude.json"),
-];
+interface ClaudeCodeKeychainData {
+  claudeAiOauth?: {
+    accessToken?: string;
+    refreshToken?: string;
+  };
+}
 
-interface ClaudeCodeCredentials {
-  oauth_token?: string;
-  access_token?: string;
-  token?: string;
+function readFromMacOSKeychain(): string | null {
+  try {
+    const username = userInfo().username;
+    const raw = execSync(
+      `security find-generic-password -s "Claude Code-credentials" -a "${username}" -w`,
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+    ).trim();
+
+    const data = JSON.parse(raw) as ClaudeCodeKeychainData;
+    const token = data.claudeAiOauth?.accessToken;
+    if (token && token.length > 0) {
+      return token;
+    }
+  } catch {
+    // keychain entry not found or parse error
+  }
+
+  // Try without account name (some installs use different account)
+  try {
+    const raw = execSync(
+      'security find-generic-password -s "Claude Code-credentials" -w',
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+    ).trim();
+
+    const data = JSON.parse(raw) as ClaudeCodeKeychainData;
+    const token = data.claudeAiOauth?.accessToken;
+    if (token && token.length > 0) {
+      return token;
+    }
+  } catch {
+    // not found
+  }
+
+  return null;
+}
+
+function readFromLinuxKeyring(): string | null {
+  // Linux: Claude Code uses libsecret
+  try {
+    const raw = execSync(
+      'secret-tool lookup service "Claude Code-credentials"',
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+    ).trim();
+
+    const data = JSON.parse(raw) as ClaudeCodeKeychainData;
+    return data.claudeAiOauth?.accessToken ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function findClaudeCodeToken(): string | null {
-  for (const path of CREDENTIAL_PATHS) {
-    try {
-      if (!existsSync(path)) continue;
-      const raw = readFileSync(path, "utf-8");
-      const data = JSON.parse(raw) as ClaudeCodeCredentials;
-      const token = data.oauth_token ?? data.access_token ?? data.token;
-      if (token && token.length > 0) {
-        return token;
-      }
-    } catch {
-      // skip malformed files
-    }
+  const os = platform();
+
+  if (os === "darwin") {
+    return readFromMacOSKeychain();
   }
+
+  if (os === "linux") {
+    return readFromLinuxKeyring();
+  }
+
+  // Windows: not yet supported for Claude Code passthrough
   return null;
 }
 
