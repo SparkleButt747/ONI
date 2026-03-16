@@ -66,8 +66,10 @@ Regardless of flags:
 ## Token Storage
 
 ### What is stored
-- Anthropic OAuth access token and refresh token
-- Plugin-specific tokens (e.g. GitHub PAT, Linear API key)
+- Anthropic API key (from `oni login --key` or `oni login --from-claude-code`)
+- Plugin-specific tokens (e.g. GitHub PAT, Linear API key) — Phase 4
+
+> **Note (March 2026):** Original design used OAuth tokens. Anthropic banned third-party OAuth in Feb 2026. API keys stored in keytar provide identical security guarantees.
 
 ### Where it is stored
 - **OS keychain exclusively** via `keytar`
@@ -76,23 +78,22 @@ Regardless of flags:
   - Windows: DPAPI (Credential Manager)
 
 ### What is NOT stored
-- Tokens in `~/.config/oni/config.json` — never
-- Tokens in `.oni/plugins.json` — never (env var names only, not values)
-- Tokens in SQLite databases — never
-- Tokens in JSONL session logs — never
-- Tokens in environment variables persisted to disk — never
+- API keys in `~/.config/oni/config.json` — never
+- API keys in `.oni/plugins.json` — never (env var names only, not values)
+- API keys in SQLite databases — never
+- API keys in JSONL session logs — never
+- API keys in environment variables persisted to disk — never
 
-### Fallback: encrypted file storage
-For headless Linux environments where libsecret is unavailable:
-```bash
-oni login --no-keychain     # prompts for passphrase, stores encrypted file
-```
-File: `~/.local/share/oni/tokens.enc` (AES-256-GCM, passphrase-derived key via scrypt)
+### Key resolution order
+1. `ANTHROPIC_API_KEY` environment variable (highest priority — for CI, scripting)
+2. OS keychain via keytar (stored by `oni login`)
+3. Claude Code credentials (read-only passthrough for developers with Claude Code installed)
 
-### Token rotation
-- Refresh token used automatically on 401
-- Access tokens expire per claude.ai policy
-- `oni login` re-runs full PKCE flow if refresh fails
+### Spending controls
+- `--budget <tokens>` — per-session hard limit
+- `--monthly-limit <tokens>` — enforced locally, persisted to `~/.local/share/oni/budget.json`
+- Budget resets per calendar month
+- Session halts with clear warning when budget exceeded — no silent overspend
 
 ---
 

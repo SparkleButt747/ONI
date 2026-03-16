@@ -33,19 +33,20 @@ Every decision here has a rationale. If you want to change something, read the r
 
 ## Authentication
 
+> **Updated March 2026:** Anthropic banned third-party OAuth in Feb 2026. API key auth with keytar provides identical security.
+
 | Component | Choice | Rationale |
 |---|---|---|
-| OAuth flow | OAuth 2.0 PKCE | Correct flow for native CLI apps. No client secret required or stored. |
-| Token storage | `keytar` | OS keychain integration: macOS Keychain, libsecret (Linux), DPAPI (Windows). Tokens never in plaintext. |
-| Local callback | `http` (stdlib) | Minimal localhost server on port 3841 for OAuth redirect. No external dependency. |
-| Session refresh | Automatic | Token refresh on 401. Transparent to user. |
+| Primary auth | API key | Standard Anthropic API key from platform.anthropic.com. Only supported third-party auth method. |
+| Secondary auth | Claude Code passthrough | Reads existing Claude Code credentials. Personal use only — same developer, same machine. |
+| Token storage | `keytar` | OS keychain integration: macOS Keychain, libsecret (Linux), DPAPI (Windows). Keys never in plaintext. |
+| Budget control | Local enforcement | `--budget` (session) and `--monthly-limit` flags. Anthropic API has no server-side spending cap. |
 
-**PKCE flow:**
-1. `oni login` generates code verifier + challenge
-2. Opens browser to `claude.ai/oauth?...`
-3. Starts localhost:3841 to catch redirect
-4. Exchanges code for tokens
-5. Stores in OS keychain via keytar
+**Auth flow:**
+1. `oni login --key sk-ant-...` or interactive prompt
+2. Validates key against Anthropic API
+3. Stores in OS keychain via keytar
+4. Resolved on each session: env var → keychain → Claude Code credentials
 
 ---
 

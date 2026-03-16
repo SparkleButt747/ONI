@@ -6,30 +6,50 @@ Complete specification for every ONI feature. Each section covers: behaviour, UX
 
 ## 1. Authentication (`oni login` / `oni logout`)
 
+> **Updated March 2026:** Anthropic banned third-party OAuth against claude.ai in Feb 2026 (Consumer ToS update). ONI uses API key auth with OS keychain storage instead. The security model (keytar, no plaintext) is identical. Claude Code token passthrough is supported as a secondary option for developers who already have Claude Code installed.
+
 ### Behaviour
-- `oni login` initiates OAuth 2.0 PKCE flow
-- Generates `code_verifier` (43–128 char random string) and `code_challenge` (SHA-256 hash, base64url encoded)
-- Opens browser to `https://claude.ai/oauth?client_id=oni&redirect_uri=http://localhost:3841/callback&code_challenge=...&code_challenge_method=S256`
-- Starts localhost HTTP server on port 3841
-- Receives authorisation code in redirect
-- Exchanges code + verifier for access/refresh token pair
-- Stores tokens in OS keychain via `keytar` under service `oni-cli`
-- Prints `Authenticated. Welcome.` — no verbose success ceremony
+
+**Primary: API key auth**
+- `oni login` prompts for Anthropic API key interactively
+- `oni login --key sk-ant-api-...` accepts key as flag
+- Validates key with lightweight Anthropic API probe
+- Stores in OS keychain via `keytar` under service `oni-cli`
+- Prints `Authenticated. Key stored in OS keychain.`
+
+**Secondary: Claude Code token passthrough**
+- `oni login --from-claude-code` reads credentials from Claude Code's local storage
+- Only works if user has Claude Code installed and authenticated
+- Technically clean — same developer using their own credentials in their own tool
+- Not a distribution mechanism for accessing Claude without an API key
+
+**Resolution priority:** `ANTHROPIC_API_KEY` env var → OS keychain → Claude Code credentials
 
 ### Error handling
-- Port 3841 in use → try 3842, 3843; fail with message if all busy
-- Browser fails to open → print URL for manual visit
-- Timeout after 120s → fail with `Login timed out. Run oni login to retry.`
-- Invalid code → `Authentication failed. Run oni login.`
+- No key provided → prompt interactively
+- Invalid key format (doesn't start with `sk-ant-`) → reject immediately
+- API validation fails (401) → `Invalid API key. Check your key at platform.anthropic.com`
+- Rate limited during validation (429) → key accepted (valid but throttled)
+- Already authenticated → warns and re-auths with `--key` flag
 
 ### `oni logout`
-- Deletes tokens from keychain
+- Deletes API key from OS keychain
 - Optionally: `--all` clears all stored preferences and learned rules
 
+### Spending controls
+Since the Anthropic API has no built-in hard spending limit, ONI enforces local budget controls:
+- `--budget <tokens>` — max tokens per session (default: unlimited)
+- `--monthly-limit <tokens>` — hard monthly cap enforced locally
+- `oni config set monthlyTokenLimit 500000` — persistent monthly limit
+- Budget state persisted to `~/.local/share/oni/budget.json`
+- Session stops with clear warning when limit hit
+
 ### Acceptance criteria
-- [ ] `oni login` completes in <5s on fast connection
-- [ ] Tokens stored in OS keychain, not in any config file
-- [ ] `oni logout` removes all tokens
+- [ ] `oni login --key` stores key in OS keychain, not in any config file
+- [ ] `oni login --from-claude-code` reads Claude Code credentials
+- [ ] `oni logout` removes key from keychain
+- [ ] `--budget 50000` stops session at 50k tokens
+- [ ] Monthly limit persists across sessions and resets per calendar month
 - [ ] Re-running `oni login` when already authenticated: warns and re-auths
 
 ---
