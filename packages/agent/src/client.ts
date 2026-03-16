@@ -21,6 +21,25 @@ export interface StreamEvent {
   isError?: boolean;
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [2000, 4000, 8000];
+
+function isRetryable(err: unknown): boolean {
+  const msg = String((err as Error)?.message ?? err);
+  return (
+    msg.includes("500") ||
+    msg.includes("529") ||
+    msg.includes("overloaded") ||
+    msg.includes("Internal server error") ||
+    msg.includes("ECONNRESET") ||
+    msg.includes("socket hang up")
+  );
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 export async function* runAgent(
   userMessage: string,
   conversation: Conversation,
@@ -36,72 +55,74 @@ export async function* runAgent(
   const maxRounds = config.maxToolRounds ?? 10;
 
   while (toolRounds < maxRounds) {
-    // Retry logic for transient API errors (500, 529, network)
-    let stream: ReturnType<typeof client.messages.stream> | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // Retry wrapper for the entire API call + stream consumption
+    let finalMessage: Anthropic.Message | null = null;
+    let streamedText = "";
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        stream = client.messages.stream({
+        streamedText = "";
+        const stream = client.messages.stream({
           model: config.model,
           max_tokens: 8192,
           system: systemPrompt,
           messages: conversation.getMessages(),
           tools,
         });
-        // Test the stream by awaiting the first event boundary
-        break;
+
+        for await (const event of stream) {
+          if (event.type === "content_block_delta") {
+            const delta = event.delta;
+            if ("text" in delta && delta.text) {
+              streamedText += delta.text;
+              yield { type: "text", content: delta.text };
+            }
+          }
+        }
+
+        finalMessage = await stream.finalMessage();
+        break; // Success — exit retry loop
       } catch (err) {
-        const msg = (err as Error).message;
-        if (attempt < 2 && (msg.includes("500") || msg.includes("529") || msg.includes("overloaded"))) {
-          const delay = (attempt + 1) * 2000;
-          yield { type: "text", content: `\n[retry ${attempt + 1}/3 in ${delay / 1000}s...]\n` };
-          await new Promise((r) => setTimeout(r, delay));
+        if (attempt < MAX_RETRIES - 1 && isRetryable(err)) {
+          const delay = RETRY_DELAYS[attempt];
+          yield {
+            type: "text",
+            content: `\n[API ERROR — RETRY ${attempt + 1}/${MAX_RETRIES} IN ${delay / 1000}S...]\n`,
+          };
+          await sleep(delay);
           continue;
         }
-        throw err;
+        // Final attempt failed or non-retryable error
+        yield {
+          type: "error",
+          content: `API ERROR: ${(err as Error).message}`,
+        };
+        return;
       }
     }
-    if (!stream) {
-      yield { type: "error", content: "API unavailable after 3 retries" };
+
+    if (!finalMessage) {
+      yield { type: "error", content: "API UNAVAILABLE AFTER RETRIES" };
       return;
     }
 
-    const assistantContent: Anthropic.ContentBlock[] = [];
+    // Process the response
     const toolUseBlocks: Array<{ id: string; name: string; input: unknown }> = [];
 
-    try {
-      for await (const event of stream) {
-        if (event.type === "content_block_delta") {
-          const delta = event.delta;
-          if ("text" in delta && delta.text) {
-            yield { type: "text", content: delta.text };
-          }
-        }
-      }
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg.includes("500") || msg.includes("529") || msg.includes("overloaded")) {
-        yield { type: "error", content: `API error: ${msg}. Try again.` };
-        return;
-      }
-      throw err;
-    }
-
-    const finalMessage = await stream.finalMessage();
-
     for (const block of finalMessage.content) {
-      assistantContent.push(block);
       if (block.type === "tool_use") {
         toolUseBlocks.push({ id: block.id, name: block.name, input: block.input });
       }
     }
 
-    conversation.addAssistant(assistantContent);
+    conversation.addAssistant(finalMessage.content);
 
     if (toolUseBlocks.length === 0) {
       yield { type: "done" };
       return;
     }
 
+    // Execute tools
     const results: Array<{ tool_use_id: string; content: string; is_error?: boolean }> = [];
     for (const toolBlock of toolUseBlocks) {
       yield {
@@ -129,5 +150,5 @@ export async function* runAgent(
     toolRounds++;
   }
 
-  yield { type: "error", content: "Max tool rounds exceeded" };
+  yield { type: "error", content: "MAX TOOL ROUNDS EXCEEDED" };
 }
