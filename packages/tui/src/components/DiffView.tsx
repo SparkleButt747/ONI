@@ -32,8 +32,8 @@ export function DiffView({
   }
 
   return (
-    <Box flexDirection="column" borderLeft borderColor={color.amber} paddingLeft={1}>
-      <Text color={color.muted}>{header.join("")}</Text>
+    <Box flexDirection="column" borderLeft borderColor={color.lime} paddingLeft={1}>
+      <Text color={color.muted}>{header.join("").toUpperCase()}</Text>
       {lines.map((line, i) => {
         let prefix: string;
         let lineColor: string;
@@ -62,9 +62,9 @@ export function DiffView({
       })}
       {showActions && (
         <Box marginTop={1} gap={1}>
-          <Text color={color.lime}>[accept]</Text>
-          <Text color={color.coral}>[reject]</Text>
-          <Text color={color.muted}>[accept file]</Text>
+          <Text color={color.lime}>[ACCEPT]</Text>
+          <Text color={color.coral}>[REJECT]</Text>
+          <Text color={color.muted}>[ACCEPT FILE]</Text>
         </Box>
       )}
     </Box>

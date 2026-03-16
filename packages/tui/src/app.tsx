@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, useInput, useApp } from "ink";
-import { color } from "./theme.js";
+import { color, CHROMA } from "./theme.js";
 import { HazardDivider } from "./components/index.js";
 import { ONIProvider, useONI } from "./context/oni-context.js";
 import { useTerminalSize } from "./hooks/use-terminal-size.js";
@@ -43,13 +43,17 @@ function AppInner({ createDispatch, bootSteps }: AppInnerProps) {
     }
   });
 
+  // Build chroma stripe — distribute 7 segments across available width
+  const segWidth = Math.max(2, Math.floor(columns / CHROMA.length));
+  const chromaUsed = segWidth * CHROMA.length;
+
   return (
     <Box flexDirection="column" width={columns}>
       {oni.view !== "boot" && (
         <>
           {/* Top bar */}
           <Box>
-            <Text color={color.amber} bold>
+            <Text color={color.lime} bold>
               {"ONI "}
             </Text>
             {oni.view === "mc" ? (
@@ -62,27 +66,28 @@ function AppInner({ createDispatch, bootSteps }: AppInnerProps) {
             <Box flexGrow={1} />
             <Box gap={2}>
               <Text
-                color={oni.view === "repl" ? color.amber : color.dim}
+                color={oni.view === "repl" ? color.lime : color.dim}
                 bold={oni.view === "repl"}
               >
                 REPL
               </Text>
               <Text
-                color={oni.view === "mc" ? color.amber : color.dim}
+                color={oni.view === "mc" ? color.lime : color.dim}
                 bold={oni.view === "mc"}
               >
                 MISSION CONTROL
               </Text>
             </Box>
           </Box>
-          {/* Gradient accent line */}
+          {/* 7-segment chroma gradient accent line */}
           <Box>
-            <Text color={color.coral}>{"██"}</Text>
-            <Text color={color.amber}>{"███"}</Text>
-            <Text color={color.cyan}>{"███"}</Text>
-            <Text color={color.lime}>{"██"}</Text>
+            {CHROMA.map((c, i) => (
+              <Text key={`chroma-${i}`} color={c}>
+                {"█".repeat(segWidth)}
+              </Text>
+            ))}
             <Text color={color.dim}>
-              {"─".repeat(Math.max(0, columns - 10))}
+              {"─".repeat(Math.max(0, columns - chromaUsed))}
             </Text>
           </Box>
         </>
@@ -101,9 +106,9 @@ function AppInner({ createDispatch, bootSteps }: AppInnerProps) {
           <HazardDivider width={columns} />
           <Box>
             <Text color={color.dim}>
-              <Text color={color.muted}>TAB</Text> switch view {"  "}
-              <Text color={color.muted}>ESC</Text> back to REPL {"  "}
-              <Text color={color.muted}>:q</Text> quit
+              <Text color={color.muted}>TAB</Text> SWITCH VIEW {"  "}
+              <Text color={color.muted}>ESC</Text> BACK TO REPL {"  "}
+              <Text color={color.muted}>:Q</Text> QUIT
             </Text>
           </Box>
         </>

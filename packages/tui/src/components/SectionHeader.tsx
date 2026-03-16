@@ -10,7 +10,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({
   title,
-  accentColor = color.cyan,
+  accentColor = color.lime,
   number,
 }: SectionHeaderProps) {
   return (

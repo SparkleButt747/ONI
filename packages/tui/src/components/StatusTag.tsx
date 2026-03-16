@@ -8,14 +8,13 @@ interface StatusTagProps {
 
 export function StatusTag({ status }: StatusTagProps) {
   const c = statusColor[status];
-  const isError = status === "ERROR";
+
+  // v3: all statuses get coloured text + dim bg simulation via dimColor
+  const isDone = status === "DONE";
 
   return (
-    <Text
-      color={isError ? color.black : c}
-      backgroundColor={isError ? c : undefined}
-    >
-      {` ${status} `}
+    <Text color={c} dimColor={!isDone} bold>
+      {`[ ${status.toUpperCase()} ]`}
     </Text>
   );
 }

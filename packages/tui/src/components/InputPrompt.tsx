@@ -33,11 +33,11 @@ export function InputPrompt({ onSubmit, isActive = true }: InputPromptProps) {
 
   return (
     <Box>
-      <Text color={color.amber} bold>
-        {"you › "}
+      <Text color={color.lime} bold>
+        {"YOU › "}
       </Text>
       <Text color={color.white}>{input}</Text>
-      <Text color={color.amber}>{"█"}</Text>
+      <Text color={color.lime}>{"█"}</Text>
     </Box>
   );
 }

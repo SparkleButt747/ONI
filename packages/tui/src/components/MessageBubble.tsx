@@ -12,7 +12,7 @@ export function MessageBubble({ role, content, agent }: MessageBubbleProps) {
   if (role === "user") {
     return (
       <Box marginTop={1}>
-        <Text color={color.amber} bold>{"you ›"}</Text>
+        <Text color={color.lime} bold>{"YOU ›"}</Text>
         <Text color={color.white}>{" "}{content}</Text>
       </Box>
     );
@@ -30,7 +30,7 @@ export function MessageBubble({ role, content, agent }: MessageBubbleProps) {
           </Box>
         ) : (
           <Box gap={0}>
-            <Text color={color.amber}>{"oni › "}</Text>
+            <Text color={color.lime}>{"ONI › "}</Text>
             <Text color={color.text}>{content}</Text>
           </Box>
         )}

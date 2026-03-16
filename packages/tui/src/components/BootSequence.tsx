@@ -12,9 +12,9 @@ export interface InitStep {
 
 // Default steps for Phase 1
 const DEFAULT_STEPS: InitStep[] = [
-  { label: "auth", detail: "API key validated", ok: true },
-  { label: "db", detail: "SQLite database ready", ok: true },
-  { label: "tools", detail: "4 built-in tools loaded", ok: true },
+  { label: "AUTH", detail: "API KEY VALIDATED", ok: true },
+  { label: "DB", detail: "SQLITE DATABASE READY", ok: true },
+  { label: "TOOLS", detail: "4 BUILT-IN TOOLS LOADED", ok: true },
 ];
 
 interface BootSequenceProps {
@@ -55,11 +55,11 @@ export function BootSequence({
       <Box flexDirection="column" marginTop={1}>
         {steps.slice(0, visibleSteps).map((step, i) => (
           <Text key={`init-${i}`}>
-            <Text color={color.muted}>{step.label.padEnd(6)}</Text>
+            <Text color={color.muted}>{step.label.toUpperCase().padEnd(6)}</Text>
             <Text color={step.ok ? color.lime : color.coral}>
               {step.ok ? "✓ " : "✗ "}
             </Text>
-            <Text color={color.text}>{step.detail}</Text>
+            <Text color={color.text}>{step.detail.toUpperCase()}</Text>
           </Text>
         ))}
       </Box>
@@ -73,8 +73,8 @@ export function BootSequence({
       {showHints && (
         <Box marginTop={1}>
           <Text color={color.muted}>
-            Type a mission. <Text color={color.amber}>:q</Text> exit ·{" "}
-            <Text color={color.amber}>:mc</Text> mission control
+            TYPE A MISSION. <Text color={color.lime}>:Q</Text> EXIT ·{" "}
+            <Text color={color.lime}>:MC</Text> MISSION CONTROL
           </Text>
         </Box>
       )}

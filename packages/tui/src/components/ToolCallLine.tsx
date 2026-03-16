@@ -25,17 +25,17 @@ export function ToolCallLine({
   let badgeText: string;
   let badgeColor: string;
   if (isFail) {
-    badgeText = "fail";
+    badgeText = "FAIL";
     badgeColor = color.coral;
   } else if (isPlugin) {
-    badgeText = "plugin";
+    badgeText = "PLUGIN";
     badgeColor = color.violet;
   } else {
-    badgeText = "tool";
+    badgeText = "TOOL";
     badgeColor = color.cyan;
   }
 
-  const toolDisplay = plugin ? `${plugin}:${tool}` : tool;
+  const toolDisplay = (plugin ? `${plugin}:${tool}` : tool).toUpperCase();
   const toolColor = isFail ? color.coral : isPlugin ? color.violet : color.cyan;
 
   return (

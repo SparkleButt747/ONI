@@ -15,16 +15,16 @@ export function PhaseGate({ phase, feature }: PhaseGateProps) {
   return (
     <Box
       borderStyle="single"
-      borderColor={color.dim}
+      borderColor={color.lime}
       paddingX={1}
       paddingY={0}
       marginTop={1}
     >
-      <Text color={color.dim}>
-        {"░ "}
-        <Text color={color.muted}>{feature}</Text>
+      <Text color={color.lime} dimColor>
+        {"━ "}
+        <Text color={color.muted}>{feature.toUpperCase()}</Text>
         {" — "}
-        <Text color={color.amber}>Phase {phase}</Text>
+        <Text color={color.amber}>PHASE {phase}</Text>
       </Text>
     </Box>
   );

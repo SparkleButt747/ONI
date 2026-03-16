@@ -7,14 +7,14 @@ interface HazardDividerProps {
 }
 
 export function HazardDivider({ width = 80 }: HazardDividerProps) {
-  // Build amber/black repeating stripe pattern using block chars
-  const segment = "████░";
+  // Lime dashed hazard pattern — v3
+  const segment = "━ ";
   const repeatCount = Math.ceil(width / segment.length);
   const bar = segment.repeat(repeatCount).slice(0, width);
 
   return (
     <Box>
-      <Text color={color.amber} dimColor>
+      <Text color={color.lime} dimColor>
         {bar}
       </Text>
     </Box>

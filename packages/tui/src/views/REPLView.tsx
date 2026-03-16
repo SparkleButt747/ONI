@@ -136,7 +136,7 @@ export function REPLView({ width }: REPLViewProps) {
             return (
               <Box key={msg.id} flexDirection="column" marginTop={1}>
                 <Box gap={0}>
-                  <Text color={color.amber}>{"oni › "}</Text>
+                  <Text color={color.lime}>{"ONI › "}</Text>
                   <Text color={execPrefix.color} bold>{execPrefix.prefix}</Text>
                 </Box>
                 <Text color={color.text}>{msg.content}</Text>
@@ -155,8 +155,8 @@ export function REPLView({ width }: REPLViewProps) {
                 {msg.diff && (
                   <Box marginTop={1}>
                     <Text color={color.muted}>
-                      Write to <Text color={color.white}>{msg.diff.file}</Text>?{" "}
-                      <Text color={color.amber} bold>[y]</Text> / n / diff
+                      WRITE TO <Text color={color.white}>{msg.diff.file}</Text>?{" "}
+                      <Text color={color.lime} bold>[Y]</Text> / N / DIFF
                     </Text>
                   </Box>
                 )}
@@ -202,8 +202,8 @@ export function REPLView({ width }: REPLViewProps) {
       {/* Thinking indicator */}
       {oni.isProcessing && (
         <Box marginTop={1}>
-          <Text color={color.amber}>{"oni › "}</Text>
-          <Text color={color.muted}>thinking...</Text>
+          <Text color={color.lime}>{"ONI › "}</Text>
+          <Text color={color.muted}>THINKING...</Text>
         </Box>
       )}
 
