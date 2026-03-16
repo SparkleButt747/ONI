@@ -179,6 +179,7 @@ Examples:
               break;
             }
             case "text": {
+              oni.setStatusLine(""); // Clear retry/thinking status when text arrives
               fullResponse += event.content ?? "";
               if (!currentMessageId) {
                 currentMessageId = `oni-${Date.now()}`;
@@ -217,6 +218,7 @@ Examples:
               break;
             }
             case "done": {
+              oni.setStatusLine("");
               if (fullResponse) {
                 // Render the final response as markdown for proper formatting
                 if (renderMd && hasMd && hasMd(fullResponse)) {
@@ -243,11 +245,17 @@ Examples:
               }
               break;
             }
+            case "status": {
+              // Update status line in-place (retries, thinking states)
+              oni.setStatusLine(event.content ?? "");
+              break;
+            }
             case "error": {
+              oni.setStatusLine(""); // Clear status on error
               oni.addMessage({
                 id: `err-${Date.now()}`,
                 role: "oni",
-                content: `Error: ${event.content}`,
+                content: `ERROR: ${event.content}`,
               });
               break;
             }

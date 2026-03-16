@@ -19,4 +19,5 @@ export { CriticVeto } from "./CriticVeto.js";
 export { BlockedState } from "./BlockedState.js";
 export { ErrorState } from "./ErrorState.js";
 export { PhaseGate } from "./PhaseGate.js";
+export { Spinner } from "./Spinner.js";
 export type { InitStep } from "./BootSequence.js";

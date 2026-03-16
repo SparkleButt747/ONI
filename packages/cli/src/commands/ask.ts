@@ -91,8 +91,11 @@ Examples:
               process.stderr.write(c.coral(`  ERROR: ${(event.result ?? "").slice(0, 200)}\n`));
             }
             break;
+          case "status":
+            process.stderr.write(`\r${c.muted(event.content ?? "")}`);
+            break;
           case "error":
-            process.stderr.write(c.coral(`ERROR: ${event.content}\n`));
+            process.stderr.write(`\n${c.coral(`ERROR: ${event.content}`)}\n`);
             break;
           case "done":
             break;

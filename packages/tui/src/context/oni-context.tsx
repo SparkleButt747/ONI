@@ -81,6 +81,8 @@ export interface ONIState {
   setDispatch: (fn: DispatchFn | null) => void;
   isProcessing: boolean;
   setIsProcessing: (v: boolean) => void;
+  statusLine: string;
+  setStatusLine: (s: string) => void;
 }
 
 const ONIContext = createContext<ONIState | null>(null);
@@ -119,6 +121,7 @@ export function ONIProvider({
   const [activeDiff, setActiveDiff] = useState<DiffData | null>(null);
   const [dispatch, setDispatch] = useState<DispatchFn | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [statusLine, setStatusLine] = useState("");
 
   const addToolCall = useCallback(
     (t: ToolCall) => setToolLog((prev) => [...prev, t]),
@@ -169,6 +172,8 @@ export function ONIProvider({
         setDispatch: (fn: DispatchFn | null) => setDispatch(() => fn),
         isProcessing,
         setIsProcessing,
+        statusLine,
+        setStatusLine,
       }}
     >
       {children}

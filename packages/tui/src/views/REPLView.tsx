@@ -7,6 +7,7 @@ import {
   ToolCallLine,
   DiffView,
   InputPrompt,
+  Spinner,
 } from "../components/index.js";
 import { useONI } from "../context/oni-context.js";
 
@@ -199,11 +200,12 @@ export function REPLView({ width }: REPLViewProps) {
         })}
       </Box>
 
-      {/* Thinking indicator */}
+      {/* Thinking / status indicator */}
       {oni.isProcessing && (
-        <Box marginTop={1}>
-          <Text color={color.lime}>{"ONI › "}</Text>
-          <Text color={color.muted}>THINKING...</Text>
+        <Box marginTop={1} gap={1}>
+          <Text color={color.lime}>ONI</Text>
+          <Spinner label={oni.statusLine || "THINKING"} />
+          <Text color={color.lime}>{"›"}</Text>
         </Box>
       )}
 

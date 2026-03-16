@@ -14,7 +14,7 @@ export interface AgentConfig {
 }
 
 export interface StreamEvent {
-  type: "text" | "tool_call" | "tool_result" | "done" | "error";
+  type: "text" | "tool_call" | "tool_result" | "done" | "error" | "status";
   content?: string;
   tool?: string;
   args?: Record<string, unknown>;
@@ -90,8 +90,8 @@ export async function* runAgent(
         if (attempt < STREAM_RETRIES - 1 && isRetryable(err)) {
           const delay = STREAM_DELAYS[attempt];
           yield {
-            type: "text",
-            content: `\n⟳ RETRYING (${attempt + 1}/${STREAM_RETRIES})...\n`,
+            type: "status",
+            content: `⟳ RETRYING (${attempt + 1}/${STREAM_RETRIES})`,
           };
           await new Promise((r) => setTimeout(r, delay));
           continue;
