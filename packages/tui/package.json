@@ -1,0 +1,21 @@
+{
+  "name": "@oni/tui",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "demo": "tsx src/demo.tsx",
+    "dev": "tsx watch src/demo.tsx"
+  },
+  "dependencies": {
+    "chalk": "^5.4.0",
+    "ink": "^6.0.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

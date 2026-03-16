@@ -1,0 +1,377 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --oni-black:#0a0a09;
+  --oni-off:#111110;
+  --oni-panel:#1a1a18;
+  --oni-border:#2a2a27;
+  --oni-text:#c8c5bb;
+  --oni-muted:#6b6860;
+  --oni-dim:#3a3a37;
+
+  --acc-amber:#f5a623;
+  --acc-cyan:#00d4c8;
+  --acc-coral:#ff4d2e;
+  --acc-lime:#b4e033;
+  --acc-violet:#7b5ea7;
+
+  --mono:'Share Tech Mono', monospace;
+  --display:'Barlow Condensed', sans-serif;
+  --body:'Barlow', sans-serif;
+}
+
+body{background:var(--oni-black);color:var(--oni-text);font-family:var(--body);font-size:13px}
+
+/* HEADER */
+.doc-header{padding:32px 0 24px;border-bottom:1px solid var(--oni-border);margin-bottom:0;position:relative;overflow:hidden}
+.doc-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc-coral),var(--acc-amber),var(--acc-cyan),var(--acc-lime))}
+.doc-eyebrow{font-family:var(--mono);font-size:10px;color:var(--acc-amber);letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px}
+.doc-title{font-family:var(--display);font-size:52px;font-weight:900;line-height:.95;letter-spacing:-.02em;color:#fff;text-transform:uppercase;margin-bottom:6px}
+.doc-title span{color:var(--acc-coral)}
+.doc-sub{font-family:var(--body);font-size:13px;color:var(--oni-muted);font-weight:300;letter-spacing:.05em;text-transform:uppercase}
+.doc-meta{display:flex;gap:20px;margin-top:16px;flex-wrap:wrap}
+.doc-meta-item{font-family:var(--mono);font-size:10px;color:var(--oni-muted)}
+.doc-meta-item span{color:var(--oni-text)}
+
+/* SECTION */
+.sec{border-top:1px solid var(--oni-border);padding:20px 0}
+.sec-label{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc-cyan);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--oni-border)}
+.sec-title{font-family:var(--display);font-size:22px;font-weight:700;text-transform:uppercase;color:#fff;letter-spacing:.02em;margin-bottom:14px}
+
+/* PHILOSOPHY */
+.philosophy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--oni-border);border:1px solid var(--oni-border);margin-bottom:16px}
+.philo-cell{background:var(--oni-panel);padding:14px}
+.philo-num{font-family:var(--mono);font-size:9px;color:var(--oni-muted);margin-bottom:4px}
+.philo-term{font-family:var(--display);font-size:16px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:6px}
+.philo-desc{font-size:11px;color:var(--oni-muted);line-height:1.55}
+
+/* PALETTE */
+.palette-row{display:flex;gap:1px;height:80px;border:1px solid var(--oni-border);margin-bottom:6px}
+.swatch{flex:1;position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 8px}
+.swatch-name{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.1em}
+.swatch-hex{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45)}
+.swatch-role{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.35);margin-top:2px}
+.palette-note{font-size:11px;color:var(--oni-muted);margin-bottom:16px;font-family:var(--mono)}
+
+/* TYPOGRAPHY */
+.type-specimen{border:1px solid var(--oni-border);background:var(--oni-panel);padding:16px;margin-bottom:8px}
+.type-row{display:flex;align-items:baseline;gap:16px;padding:10px 0;border-bottom:1px solid var(--oni-dim)}
+.type-row:last-child{border-bottom:none}
+.type-label{font-family:var(--mono);font-size:9px;color:var(--oni-muted);width:100px;flex-shrink:0;text-transform:uppercase;letter-spacing:.1em}
+.type-sample-d{font-family:var(--display);font-weight:900;font-size:28px;text-transform:uppercase;color:#fff;line-height:1}
+.type-sample-d2{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase;color:var(--acc-amber);letter-spacing:.05em}
+.type-sample-m{font-family:var(--mono);font-size:12px;color:var(--acc-cyan)}
+.type-sample-b{font-family:var(--body);font-size:13px;color:var(--oni-text);font-weight:300;line-height:1.5}
+.type-meta{font-family:var(--mono);font-size:9px;color:var(--oni-muted);margin-left:auto;white-space:nowrap}
+
+/* MOTION */
+.motion-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.motion-card{background:var(--oni-panel);border:1px solid var(--oni-border);padding:12px}
+.motion-title{font-family:var(--display);font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:4px}
+.motion-spec{font-family:var(--mono);font-size:10px;color:var(--acc-cyan);margin-bottom:6px}
+.motion-desc{font-size:11px;color:var(--oni-muted);line-height:1.5}
+
+/* COMPONENT */
+.component-strip{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.comp{background:var(--oni-panel);border:1px solid var(--oni-border);padding:14px;display:flex;align-items:center;gap:12px}
+.comp-preview{flex-shrink:0}
+.comp-info{flex:1;min-width:0}
+.comp-name{font-family:var(--display);font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:3px}
+.comp-rule{font-size:11px;color:var(--oni-muted);line-height:1.45}
+
+/* LANGUAGE SAMPLES */
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--oni-border);border:1px solid var(--oni-border);margin-bottom:16px}
+.lang-cell{background:var(--oni-panel);padding:14px}
+.lang-label{font-family:var(--mono);font-size:9px;color:var(--oni-muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+
+/* TERMINAL MOCKUP */
+.term-mock{background:#0d0d0b;border:1px solid var(--oni-border);border-top:2px solid var(--acc-amber);padding:14px;font-family:var(--mono);font-size:11px;line-height:1.7;margin-bottom:8px}
+.t-p{color:var(--acc-amber)}.t-c{color:var(--acc-cyan)}.t-g{color:var(--acc-lime)}.t-r{color:var(--acc-coral)}.t-w{color:#fff}.t-m{color:var(--oni-muted)}
+
+/* HAZARD / UTILITY */
+.hazard-bar{height:6px;background:repeating-linear-gradient(90deg,var(--acc-amber) 0,var(--acc-amber) 10px,var(--oni-black) 10px,var(--oni-black) 20px);margin:16px 0;opacity:.7}
+.tag-pill{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 7px;border:1px solid;text-transform:uppercase;letter-spacing:.1em}
+.tag-coral{color:var(--acc-coral);border-color:var(--acc-coral)}
+.tag-cyan{color:var(--acc-cyan);border-color:var(--acc-cyan)}
+.tag-amber{color:var(--acc-amber);border-color:var(--acc-amber)}
+.tag-lime{color:var(--acc-lime);border-color:var(--acc-lime)}
+
+/* DO/DON'T */
+.verdict-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--oni-border);border:1px solid var(--oni-border);margin-bottom:16px}
+.verdict{background:var(--oni-panel);padding:14px}
+.verdict-head{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+.verdict-do .verdict-head{color:var(--acc-lime)}
+.verdict-dont .verdict-head{color:var(--acc-coral)}
+.verdict ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.verdict li{font-size:11px;color:var(--oni-muted);line-height:1.4;padding-left:14px;position:relative}
+.verdict li::before{position:absolute;left:0;font-family:var(--mono);font-size:10px}
+.verdict-do li::before{content:'↗';color:var(--acc-lime)}
+.verdict-dont li::before{content:'×';color:var(--acc-coral)}
+
+/* ANIM */
+@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(600%)}}
+@keyframes pulse-border{0%,100%{border-color:var(--oni-border)}50%{border-color:var(--acc-amber)}}
+</style>
+
+<div class="doc-header">
+  <div class="doc-eyebrow">ONI · Visual Design System · v0.1.0</div>
+  <div class="doc-title">Graphic<br><span>Realism</span></div>
+  <div class="doc-sub">Design language document — inspired by Marathon (Bungie) · "Wipeout meets Ghost in the Shell"</div>
+  <div class="doc-meta">
+    <div class="doc-meta-item">CODENAME <span>GRAPHIC REALISM</span></div>
+    <div class="doc-meta-item">TONE <span>Y2K CYBERPUNK · UTILITARIAN SCI-FI · ACID POSTER</span></div>
+    <div class="doc-meta-item">REFS <span>MARATHON · MIRROR'S EDGE · GHOST IN THE SHELL · WIPEOUT</span></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">01 · Design philosophy</div>
+  <div class="philosophy-grid">
+    <div class="philo-cell">
+      <div class="philo-num">01.A</div>
+      <div class="philo-term">Graphic Realism</div>
+      <div class="philo-desc">Objects are real but rendered with graphic clarity. No photorealism, no pure abstraction. Every surface communicates its function through visual language — labels, stripes, colour-coding. Reality, amplified.</div>
+    </div>
+    <div class="philo-cell">
+      <div class="philo-num">01.B</div>
+      <div class="philo-term">Utility as aesthetics</div>
+      <div class="philo-desc">Industrial signage, hazard markings, stencil type, warning colours — these are not decorations. They ARE the design. ONI's UI borrows this: every chrome is functional, every stripe earns its place.</div>
+    </div>
+    <div class="philo-cell">
+      <div class="philo-num">01.C</div>
+      <div class="philo-term">Saturated clarity</div>
+      <div class="philo-desc">High-chroma accent colours on near-black backgrounds. No gradients diluting the signal. No blending. Flat planes of colour separated by hard edges. The palette is a system, not decoration.</div>
+    </div>
+    <div class="philo-cell">
+      <div class="philo-num">01.D</div>
+      <div class="philo-term">Machine consciousness</div>
+      <div class="philo-desc">ONI is an onboard intelligence. The UI should feel like looking at a system's self-representation — diagnostic, precise, slightly alien. Ghost in the Shell HUDs, not Apple glass morphism.</div>
+    </div>
+    <div class="philo-cell">
+      <div class="philo-num">01.E</div>
+      <div class="philo-term">Retrofuturism</div>
+      <div class="philo-desc">Monospace terminals, CRT glitch artifacts, scan-line textures — 90s sci-fi futures as imagined from now. Not nostalgia: an aesthetic with ideological weight. Technology that has been used, worn, maintained.</div>
+    </div>
+    <div class="philo-cell">
+      <div class="philo-num">01.F</div>
+      <div class="philo-term">No comfort phrasing</div>
+      <div class="philo-desc">Mirrors ONI's personality. No rounded-corner softness, no pastel reassurance. Sharp cuts, hard borders, direct type. The design communicates the same way ONI speaks: terse, precise, honest.</div>
+    </div>
+  </div>
+</div>
+
+<div class="hazard-bar"></div>
+
+<div class="sec">
+  <div class="sec-label">02 · Colour system</div>
+  <div class="palette-row">
+    <div class="swatch" style="background:#0a0a09"><div class="swatch-name">void</div><div class="swatch-hex">#0a0a09</div><div class="swatch-role">primary bg</div></div>
+    <div class="swatch" style="background:#1a1a18"><div class="swatch-name">panel</div><div class="swatch-hex">#1a1a18</div><div class="swatch-role">surfaces</div></div>
+    <div class="swatch" style="background:#2a2a27"><div class="swatch-name">border</div><div class="swatch-hex">#2a2a27</div><div class="swatch-role">dividers</div></div>
+    <div class="swatch" style="background:#6b6860"><div class="swatch-name">inactive</div><div class="swatch-hex">#6b6860</div><div class="swatch-role">muted text</div></div>
+    <div class="swatch" style="background:#c8c5bb"><div class="swatch-name">body</div><div class="swatch-hex">#c8c5bb</div><div class="swatch-role">primary text</div></div>
+    <div class="swatch" style="background:#ffffff"><div class="swatch-name">white</div><div class="swatch-hex">#ffffff</div><div class="swatch-role">headings</div></div>
+  </div>
+  <div class="palette-row">
+    <div class="swatch" style="background:#f5a623"><div class="swatch-name">amber</div><div class="swatch-hex">#f5a623</div><div class="swatch-role">ONI · primary</div></div>
+    <div class="swatch" style="background:#00d4c8"><div class="swatch-name">cyan</div><div class="swatch-hex">#00d4c8</div><div class="swatch-role">tools · info</div></div>
+    <div class="swatch" style="background:#ff4d2e"><div class="swatch-name">coral</div><div class="swatch-hex">#ff4d2e</div><div class="swatch-role">error · danger</div></div>
+    <div class="swatch" style="background:#b4e033"><div class="swatch-name">lime</div><div class="swatch-hex">#b4e033</div><div class="swatch-role">success · ok</div></div>
+    <div class="swatch" style="background:#7b5ea7"><div class="swatch-name">violet</div><div class="swatch-hex">#7b5ea7</div><div class="swatch-role">planner Σ</div></div>
+    <div class="swatch" style="background:#e8c547"><div class="swatch-name">warning</div><div class="swatch-hex">#e8c547</div><div class="swatch-role">caution · warn</div></div>
+  </div>
+  <div class="palette-note">RULE: accents on void/panel only. Never accent on accent. No gradients between accent colours. No opacity blends — flat fills or nothing.</div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">03 · Typography</div>
+  <div class="type-specimen">
+    <div class="type-row">
+      <div class="type-label">display / h1</div>
+      <div class="type-sample-d">ONBOARD NEURAL INTELLIGENCE</div>
+      <div class="type-meta">Barlow Condensed 900 · uppercase · tracked −.02em</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">subheading</div>
+      <div class="type-sample-d2">Mission Control — Session Active</div>
+      <div class="type-meta">Barlow Condensed 600 · amber · +.05em</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">mono / ui</div>
+      <div class="type-sample-m">read_file src/auth/middleware.ts · 12ms · OK</div>
+      <div class="type-meta">Share Tech Mono · 11–12px · cyan</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">body copy</div>
+      <div class="type-sample-b">Race condition in the sliding window check — INCR and GET are not atomic. Fix with MULTI/EXEC.</div>
+      <div class="type-meta">Barlow 300 · 13px · off-white</div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--oni-muted);font-family:var(--mono)">RULE: Barlow Condensed for all chrome / labels / UI. Share Tech Mono for all terminal, code, tool output. Barlow Light for prose. Zero other typefaces.</div>
+</div>
+
+<div class="hazard-bar"></div>
+
+<div class="sec">
+  <div class="sec-label">04 · Motion + interaction</div>
+  <div class="motion-grid">
+    <div class="motion-card">
+      <div class="motion-title">Scan entry</div>
+      <div class="motion-spec">duration: 180ms · easing: steps(8)</div>
+      <div class="motion-desc">Elements enter via scanline reveal — not fade. Left-to-right or top-to-bottom pixel exposure. Feels like data being loaded, not a CSS transition.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-title">Glitch pulse</div>
+      <div class="motion-spec">trigger: error state · duration: 120ms × 3</div>
+      <div class="motion-desc">On error: element X-shifts ±3px three times in rapid succession with coral border flash. No bounce, no spring. Hard, digital, wrong.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-title">Border pulse</div>
+      <div class="motion-spec">trigger: active task · 2s loop · border-color only</div>
+      <div class="motion-desc">Running tasks pulse their border between oni-border and acc-amber. No opacity change, no scale. The border is the activity indicator.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-title">Type stream</div>
+      <div class="motion-spec">ONI responses: character-by-character</div>
+      <div class="motion-desc">ONI output streams one character at a time in the REPL. Not a typewriter affectation — reinforces the machine-printing aesthetic and matches actual SSE streaming.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-title">Cursor</div>
+      <div class="motion-spec">7×13px block · steps(1) blink · 1s</div>
+      <div class="motion-desc">Block cursor, not underline. Amber fill. Binary blink — on/off, no fade. Identical across all input contexts. Never changes shape.</div>
+    </div>
+    <div class="motion-card">
+      <div class="motion-title">State transition</div>
+      <div class="motion-spec">duration: 0ms (instant) or 150ms max</div>
+      <div class="motion-desc">State changes are near-instant. ONI is a machine. Machines don't ease in. Reserve 150ms only for content that needs a moment to assemble (multi-panel layouts).</div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">05 · UI component language</div>
+  <div class="component-strip">
+    <div class="comp">
+      <div class="comp-preview"><span class="tag-amber">RUNNING</span></div>
+      <div class="comp-info">
+        <div class="comp-name">Status tags</div>
+        <div class="comp-rule">Monospace, uppercase, 9px, 1px border matching text colour. No background fill. No border-radius. States: RUNNING (amber) · BLOCKED (coral) · DONE (lime) · ERROR (coral solid bg) · IDLE (muted).</div>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="comp-preview" style="width:80px;height:5px;background:#2a2a27;border-radius:0;overflow:hidden"><div style="width:62%;height:100%;background:var(--acc-amber)"></div></div>
+      <div class="comp-info">
+        <div class="comp-name">Progress bars</div>
+        <div class="comp-rule">5px height, zero border-radius, no animation. Fill colour encodes meaning: amber = active, lime = complete, coral = overbudget. Track is oni-border. No percentage label on bar — label above in mono.</div>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="comp-preview" style="font-family:var(--mono);font-size:10px;color:var(--acc-cyan)">[ tool ] read_file</div>
+      <div class="comp-info">
+        <div class="comp-name">Tool call badges</div>
+        <div class="comp-rule">Format: `[ plugin ] tool_name arg` on one line. Brackets in muted, tool_name in cyan, arg in oni-muted. Built-in vs plugin distinguished by prefix only. Never a visual card — always inline mono text.</div>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="comp-preview" style="font-family:var(--mono);font-size:9px;background:repeating-linear-gradient(90deg,var(--acc-amber) 0,var(--acc-amber) 8px,transparent 8px,transparent 16px);height:6px;width:80px;opacity:.7"></div>
+      <div class="comp-info">
+        <div class="comp-name">Hazard dividers</div>
+        <div class="comp-rule">Amber/black diagonal stripe, 6px height, full width. Used to separate major sections. Also appears on destructive action warnings, rate-limit alerts, budget overruns. Direct reference to Marathon's industrial safety signage.</div>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="comp-preview" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;color:#fff;line-height:1;border-left:3px solid var(--acc-coral);padding-left:8px">ONI</div>
+      <div class="comp-info">
+        <div class="comp-name">Section headers</div>
+        <div class="comp-rule">Barlow Condensed 900, uppercase, white, 22px. Left border accent in section colour (coral = errors, cyan = info, amber = active, lime = success). No background. Hard left edge. Never centred.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hazard-bar"></div>
+
+<div class="sec">
+  <div class="sec-label">06 · Visual language samples — applied to ONI terminal</div>
+  <div class="term-mock">
+    <div style="color:var(--oni-muted);font-size:9px;letter-spacing:.15em;margin-bottom:8px">ONI v0.1.0 · conv_8fk2a · 47.2k tok · 3 RUNNING</div>
+    <div style="border-top:1px solid var(--oni-dim);margin-bottom:8px"></div>
+    <div><span class="t-m">you › </span><span class="t-w">the order total is wrong for discount codes</span></div>
+    <div style="margin-top:6px"></div>
+    <div><span style="color:var(--acc-violet);font-weight:500">[Σ]</span> <span class="t-m">decomposing: 3 subtasks · budget: 6 calls · no ambiguity</span></div>
+    <div><span style="color:var(--acc-cyan)">[⚡]</span> <span style="color:var(--oni-muted)">[tool]</span> <span class="t-c">read_file</span> <span class="t-m">src/services/PricingEngine.ts</span></div>
+    <div><span style="color:var(--acc-cyan)">[⚡]</span> <span style="color:var(--oni-muted)">[tool]</span> <span class="t-c">read_file</span> <span class="t-m">src/services/OrderService.ts:processTotal</span></div>
+    <div style="margin-top:6px"></div>
+    <div><span class="t-p">oni › </span><span class="t-w">applyDiscount() runs post-tax. Discounts must reduce pre-tax subtotal. Swapping call order in processTotal().</span></div>
+    <div style="margin-top:4px"></div>
+    <div><span style="color:var(--acc-lime)">+</span> <span class="t-m">calculateTax(subtotal - discount)</span></div>
+    <div><span class="t-r">-</span> <span class="t-m">applyDiscount(calculateTax(subtotal))</span></div>
+    <div style="margin-top:6px"></div>
+    <div><span style="color:var(--acc-coral)">[⊘]</span> <span class="t-m">output accepted · no regressions · tests cover this path · clean.</span></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">07 · Do / don't</div>
+  <div class="verdict-grid">
+    <div class="verdict verdict-do">
+      <div class="verdict-head">do</div>
+      <ul>
+        <li>Hard borders — 1px solid, never box-shadow</li>
+        <li>Flat colour fills — no gradients</li>
+        <li>Block cursor, amber, binary blink</li>
+        <li>Barlow Condensed for all labels, uppercase</li>
+        <li>Share Tech Mono for all terminal / tool output</li>
+        <li>Hazard stripes to denote danger, limits, warnings</li>
+        <li>Left-aligned everything — never centred text in UI</li>
+        <li>Status always visible: token count, burn rate, task count</li>
+        <li>Colour encodes meaning — never decoration</li>
+        <li>Near-black background (#0a0a09) — not true black</li>
+      </ul>
+    </div>
+    <div class="verdict verdict-dont">
+      <div class="verdict-head">don't</div>
+      <ul>
+        <li>Border-radius > 0 on any structural element</li>
+        <li>Glassmorphism, frosted panels, backdrop-filter</li>
+        <li>Drop shadows or box-shadow for decoration</li>
+        <li>Gradient fills between accent colours</li>
+        <li>Emoji anywhere in the UI</li>
+        <li>Inter, Roboto, or system UI fonts</li>
+        <li>Animated spinners — use border pulse instead</li>
+        <li>Easing curves > 150ms</li>
+        <li>Tooltips — information lives inline or not at all</li>
+        <li>Centred headers or hero text</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">08 · Sub-agent colour identities</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--oni-border);border:1px solid var(--oni-border)">
+    <div style="background:var(--oni-panel);padding:14px;border-left:3px solid #7b5ea7">
+      <div style="font-family:var(--mono);font-size:9px;color:#7b5ea7;letter-spacing:.15em;margin-bottom:6px">PLANNER · Σ</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:4px">Violet</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--oni-muted)">#7b5ea7</div>
+      <div style="font-size:11px;color:var(--oni-muted);margin-top:6px;line-height:1.45">Deliberate, considered. Violet suggests depth and latency — thinking happening before action.</div>
+    </div>
+    <div style="background:var(--oni-panel);padding:14px;border-left:3px solid #00d4c8">
+      <div style="font-family:var(--mono);font-size:9px;color:#00d4c8;letter-spacing:.15em;margin-bottom:6px">EXECUTOR · ⚡</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:4px">Cyan</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--oni-muted)">#00d4c8</div>
+      <div style="font-size:11px;color:var(--oni-muted);margin-top:6px;line-height:1.45">Active, operational, electric. Cyan = systems online. All tool calls, all writes, all action output.</div>
+    </div>
+    <div style="background:var(--oni-panel);padding:14px;border-left:3px solid #ff4d2e">
+      <div style="font-family:var(--mono);font-size:9px;color:#ff4d2e;letter-spacing:.15em;margin-bottom:6px">CRITIC · ⊘</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:4px">Coral</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--oni-muted)">#ff4d2e</div>
+      <div style="font-size:11px;color:var(--oni-muted);margin-top:6px;line-height:1.45">Alert, veto, review. Coral is the same colour as warning tape — the Critic's job is to stop things.</div>
+    </div>
+  </div>
+</div>
