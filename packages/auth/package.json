@@ -1,0 +1,10 @@
+{
+  "name": "@oni/auth",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "keytar": "^7.9.0",
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}
