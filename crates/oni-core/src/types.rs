@@ -169,3 +169,20 @@ impl std::fmt::Display for AutonomyLevel {
         write!(f, "{}", self.display_name())
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PermissionScope {
+    Once,
+    Session,
+    Permanent,
+}
+
+impl PermissionScope {
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Once => "YES (ONCE)",
+            Self::Session => "YES (SESSION)",
+            Self::Permanent => "YES (ALWAYS)",
+        }
+    }
+}

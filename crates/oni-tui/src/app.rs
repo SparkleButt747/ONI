@@ -250,6 +250,10 @@ pub struct App {
     /// When false (default), tool calls show collapsed one-line summaries.
     /// Ctrl+O toggles to show full tool output inline.
     pub verbose_tool_output: bool,
+    /// Tools auto-approved for this session.
+    pub session_allowed_tools: std::collections::HashSet<String>,
+    /// Tools permanently approved.
+    pub permanent_allowed_tools: std::collections::HashSet<String>,
 }
 
 /// A tool proposal currently shown to the user awaiting y/n/d response.
@@ -338,7 +342,15 @@ impl App {
             server_url: String::new(),
             server_config: None,
             verbose_tool_output: false,
+            session_allowed_tools: std::collections::HashSet::new(),
+            permanent_allowed_tools: std::collections::HashSet::new(),
         }
+    }
+
+    /// Returns true if the tool is auto-approved for this session or permanently.
+    pub fn is_tool_auto_approved(&self, tool_name: &str) -> bool {
+        self.session_allowed_tools.contains(tool_name)
+            || self.permanent_allowed_tools.contains(tool_name)
     }
 
     /// Set the server URL for display in splash/status.
@@ -1304,9 +1316,10 @@ pub async fn run(
                         KeyCode::Char('y') | KeyCode::Char('Y') => Some(ConfirmResponse::Yes),
                         KeyCode::Char('n') | KeyCode::Char('N') => Some(ConfirmResponse::No),
                         KeyCode::Char('d') | KeyCode::Char('D') => Some(ConfirmResponse::Diff),
-                        KeyCode::Char('a') | KeyCode::Char('A') => Some(ConfirmResponse::Always),
-                        KeyCode::Enter => Some(ConfirmResponse::Yes), // Enter = yes
-                        KeyCode::Esc => Some(ConfirmResponse::No),   // Esc = no
+                        KeyCode::Char('s') | KeyCode::Char('S') => Some(ConfirmResponse::AllowSession),
+                        KeyCode::Char('a') | KeyCode::Char('A') => Some(ConfirmResponse::AllowPermanent),
+                        KeyCode::Enter => Some(ConfirmResponse::Yes), // Enter = yes (once)
+                        KeyCode::Esc => Some(ConfirmResponse::No),   // Esc = deny
                         _ => None,
                     };
                     if let Some(resp) = response {
@@ -1315,8 +1328,14 @@ pub async fn run(
                                 ConfirmResponse::Yes => "APPROVED",
                                 ConfirmResponse::No => "DENIED",
                                 ConfirmResponse::Diff => "APPROVED (DIFF)",
-                                ConfirmResponse::Always => "ALWAYS APPROVE",
+                                ConfirmResponse::AllowSession => "SESSION APPROVED",
+                                ConfirmResponse::AllowPermanent => "PERMANENTLY APPROVED",
                             };
+                            if resp == ConfirmResponse::AllowSession {
+                                app.session_allowed_tools.insert(proposal.name.clone());
+                            } else if resp == ConfirmResponse::AllowPermanent {
+                                app.permanent_allowed_tools.insert(proposal.name.clone());
+                            }
                             app.messages.push(DisplayMessage::System(
                                 format!("{}: {}", status, proposal.summary),
                             ));

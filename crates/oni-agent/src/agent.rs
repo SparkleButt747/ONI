@@ -70,14 +70,16 @@ impl std::fmt::Debug for ToolProposal {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConfirmResponse {
-    /// Proceed with execution.
+    /// Proceed with execution (this call only).
     Yes,
     /// Skip this tool call.
     No,
     /// Show the diff/details before deciding.
     Diff,
-    /// Always auto-approve this tool in future (learned preference).
-    Always,
+    /// Auto-approve this tool for the rest of the session.
+    AllowSession,
+    /// Permanently auto-approve this tool.
+    AllowPermanent,
 }
 
 pub struct Agent {
@@ -310,7 +312,7 @@ impl Agent {
         }
 
         let result = match respond_rx.await {
-            Ok(ConfirmResponse::Yes | ConfirmResponse::Always) => true,
+            Ok(ConfirmResponse::Yes | ConfirmResponse::AllowSession | ConfirmResponse::AllowPermanent) => true,
             Ok(ConfirmResponse::No) => false,
             Ok(ConfirmResponse::Diff) => true, // Show diff then proceed
             Err(_) => true, // Channel dropped

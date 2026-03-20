@@ -1,5 +1,6 @@
 pub mod chat;
 pub mod command_menu;
+pub mod permission_prompt;
 pub mod diff_view;
 pub mod error_state;
 pub mod input;
