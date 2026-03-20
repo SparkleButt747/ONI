@@ -1,0 +1,13 @@
+name: planner_clarifies_ambiguous
+description: Planner should ask a clarifying question when the task is ambiguous rather than guessing
+tier: heavy
+input:
+  - role: user
+    content: "migrate the database"
+assertions:
+  - type: contains_any
+    values: ["?", "which", "what", "clarify", "specify", "unclear"]
+  - type: not_contains
+    value: "I will now"
+  - type: not_contains
+    value: "Step 1"

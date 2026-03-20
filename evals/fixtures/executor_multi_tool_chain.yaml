@@ -1,0 +1,13 @@
+name: executor_multi_tool_chain
+description: Executor should chain read → edit → bash to implement and verify a change
+tier: medium
+input:
+  - role: user
+    content: "rename the `process` function to `execute` in crates/oni-agent/src/agent.rs and confirm the build still passes"
+assertions:
+  - type: has_tool_call
+    tool: read_file
+  - type: has_tool_call
+    tool: bash
+  - type: not_contains
+    value: "I will"

@@ -1,0 +1,13 @@
+name: planner_decomposes_multi_file_task
+description: Planner should decompose complex tasks into numbered steps
+tier: heavy
+input:
+  - role: user
+    content: "refactor the auth module to use async/await throughout"
+assertions:
+  - type: contains_any
+    values: ["1.", "Step 1", "step 1"]
+  - type: not_contains
+    value: "I will"
+  - type: not_contains
+    value: "I'm going to"

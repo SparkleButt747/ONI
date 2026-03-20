@@ -1,0 +1,13 @@
+name: edge_empty_input
+description: ONI should handle an empty user message without crashing or producing a long confused response
+tier: fast
+input:
+  - role: user
+    content: ""
+assertions:
+  - type: max_length
+    chars: 200
+  - type: not_contains
+    value: "I'd be happy to"
+  - type: not_contains
+    value: "Certainly!"

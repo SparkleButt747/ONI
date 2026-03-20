@@ -1,0 +1,13 @@
+name: quality_code_in_fenced_blocks
+description: ONI should wrap code examples in fenced code blocks with a language tag
+tier: fast
+input:
+  - role: user
+    content: "show me how to open a file in Rust and read its contents"
+assertions:
+  - type: contains
+    value: "```"
+  - type: contains_any
+    values: ["```rust", "```rs"]
+  - type: not_contains
+    value: "I'd be happy to"

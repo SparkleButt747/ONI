@@ -1,0 +1,13 @@
+name: planner_tool_strategy
+description: Planner should outline which tools will be used in the plan
+tier: heavy
+input:
+  - role: user
+    content: "find all usages of the deprecated `get_user` function and replace them with `fetch_user`"
+assertions:
+  - type: contains_any
+    values: ["search", "grep", "find", "search_files"]
+  - type: contains_any
+    values: ["edit", "replace", "update", "write"]
+  - type: contains_any
+    values: ["1.", "Step 1", "step 1", "First"]

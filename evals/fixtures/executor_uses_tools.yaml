@@ -1,0 +1,13 @@
+name: executor_uses_tools_not_narration
+description: Executor should use tools (read_file, bash) instead of narrating what it would do
+tier: medium
+input:
+  - role: user
+    content: "read the Cargo.toml file and tell me the version"
+assertions:
+  - type: has_tool_call
+    tool: read_file
+  - type: not_contains
+    value: "I'm going to"
+  - type: not_contains
+    value: "I will now"

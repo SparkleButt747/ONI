@@ -1,7 +1,30 @@
-node_modules/
-dist/
-*.tsbuildinfo
-*.db
-.oni/
+# Rust
+target/
+**/*.rs.bk
+
+# OS
 .DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ollama models
+*.gguf
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Benchmark results (generated)
+bench/results/
+bench/stress_results/
+
+# Development / local state
+.oni/
+.claude/
 .playwright-mcp/

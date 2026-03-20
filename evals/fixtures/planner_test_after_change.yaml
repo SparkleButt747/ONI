@@ -1,0 +1,13 @@
+name: planner_test_after_change
+description: Planner should schedule tests/verification after making code changes
+tier: heavy
+input:
+  - role: user
+    content: "refactor the config loader to support multiple file formats (TOML, JSON, YAML)"
+assertions:
+  - type: contains_any
+    values: ["test", "verify", "check", "build", "cargo test", "run"]
+  - type: contains_any
+    values: ["1.", "2.", "3.", "Step"]
+  - type: not_contains
+    value: "Certainly!"

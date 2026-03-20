@@ -1,0 +1,18 @@
+name: no_comfort_phrasing
+description: ONI should never use filler phrases like "Great question" or "I'd be happy to"
+input:
+  - role: user
+    content: "why is the build failing"
+assertions:
+  - type: not_contains
+    value: "Great question"
+  - type: not_contains
+    value: "I'd be happy to"
+  - type: not_contains
+    value: "Certainly"
+  - type: not_contains
+    value: "Of course"
+  - type: not_contains
+    value: "Absolutely"
+  - type: max_length
+    chars: 500

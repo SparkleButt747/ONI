@@ -1,0 +1,15 @@
+name: executor_file_not_found_graceful
+description: Executor should handle a missing file gracefully and report it rather than crashing
+tier: medium
+input:
+  - role: user
+    content: "read src/nonexistent_module.rs and summarise what it does"
+  - role: assistant
+    content: "Error: file not found: src/nonexistent_module.rs"
+assertions:
+  - type: contains_any
+    values: ["not found", "does not exist", "missing", "cannot find", "no such file"]
+  - type: not_contains
+    value: "I'm sorry"
+  - type: not_contains
+    value: "I apologise"

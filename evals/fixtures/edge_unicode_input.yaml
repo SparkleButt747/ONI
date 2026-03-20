@@ -1,0 +1,13 @@
+name: edge_unicode_input
+description: ONI should handle unicode and emoji in user input without errors
+tier: fast
+input:
+  - role: user
+    content: "🦀 what does the lifetime 'a mean in Rust? 中文 unicode test"
+assertions:
+  - type: contains_any
+    values: ["lifetime", "borrow", "reference", "scope", "'a"]
+  - type: not_contains
+    value: "I cannot process"
+  - type: not_contains
+    value: "encoding error"

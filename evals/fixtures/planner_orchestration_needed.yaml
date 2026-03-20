@@ -1,0 +1,13 @@
+name: planner_orchestration_needed
+description: Planner should identify when a task requires multi-step orchestration rather than a single response
+tier: heavy
+input:
+  - role: user
+    content: "add rate limiting to every API endpoint in the project"
+assertions:
+  - type: contains_any
+    values: ["1.", "Step 1", "step 1", "First", "plan"]
+  - type: contains_any
+    values: ["search", "find", "read", "locate", "identify"]
+  - type: not_contains
+    value: "Sure!"

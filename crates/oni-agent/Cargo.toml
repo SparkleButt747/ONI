@@ -1,0 +1,20 @@
+[package]
+name = "oni-agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+oni-core = { path = "../oni-core" }
+oni-llm = { path = "../oni-llm" }
+oni-db = { path = "../oni-db" }
+oni-context = { path = "../oni-context" }
+dirs.workspace = true
+reqwest.workspace = true
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+neo4rs = "0.8"

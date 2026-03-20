@@ -1,91 +1,114 @@
-# ONI — Onboard Neural Intelligence
+# ONI — Onboard Native Intelligence
 
-> *"Reduce friction between developer and agent to zero. Ship code 24/7, around the clock."*
+Local-first AI assistant powered by Ollama. Runs entirely on your machine. No cloud, no API keys, no telemetry.
 
-ONI is an open-source CLI agent for non-commercial developers. It provides a Claude-powered coding agent via OAuth (no API key required), with a terminal-first UX, persistent session memory, adaptive tool learning, and a distinctive "Graphic Realism" aesthetic inspired by Bungie's Marathon.
+---
+
+## What it is
+
+ONI is a terminal AI assistant built in Rust with a Ratatui TUI. It uses a 3-agent orchestrator (Planner → Executor → Critic) backed by local Ollama models, with a full tool system, persistent personality, preference learning, and a codebase context engine.
+
+---
+
+## Key Features
+
+- **3-agent orchestration** — MIMIR (planner) decomposes tasks into steps; FENRIR (executor) runs them with tools; SKULD (critic) reviews each step and can replan up to 2 cycles
+- **11 tools** — read/write/edit file, bash, list directory, search files, get URL, ask user, undo, forge (dynamic tool generation), and tool gating via `--write`/`--exec` flags
+- **Personality system** — SOUL.md (identity/voice), USER.md (owner profile), 6-value emotional state with time decay, 5-stage relationship tracker, daily session journal
+- **Preference learning** — records accept/reject/edit signals per tool, promotes high-confidence rules into the system prompt automatically
+- **Context engine** — FTS5 BM25 retrieval on an indexed project database, symbol extraction for 7 languages, file watcher for incremental updates, `.oniignore` support
+- **Mission Control view** — ratatui TUI with Chat, MissionControl, and Preferences panes; sub-agent status, tool call log, diff previews, burn rate display
+- **Knowledge graph** — in-memory, JSON-persisted cross-session discovery store with typed nodes and edges
+- **Autonomy levels** — Low/Medium/High; controls which tool calls require user confirmation
+- **Batch mode only** — no streaming; responses arrive in full (Ollama `stream: false`)
+
+---
+
+## Quick Start
+
+```bash
+# Prerequisites: Rust toolchain + Ollama running locally
+cargo build --release
+
+# One-shot question
+cargo run -- ask "what is a race condition"
+
+# Interactive chat (read-only)
+cargo run -- chat
+
+# Interactive chat with file write and shell execution
+cargo run -- chat --write --exec
+
+# Global install
+cargo install --path .
+oni chat --write --exec --autonomy high
+
+# Check model availability
+oni doctor
+
+# Index current project for context retrieval
+oni init
+```
+
+---
+
+## CLI Commands
+
+| Command | Purpose |
+|---------|---------|
+| `oni chat` | Interactive TUI session |
+| `oni ask <question>` | One-shot question (also reads stdin) |
+| `oni run <prompt>` | Headless agent run for benchmarking |
+| `oni doctor` | Check Ollama + model health |
+| `oni init` | Index project files for context |
+| `oni sweep <goal>` | Codebase-wide autonomous task |
+| `oni review` | Review staged git changes |
+| `oni prefs` | Show/manage learned preferences |
+| `oni pin <path>` | Pin context retrieval to a subtree |
+| `oni config` | Show configuration |
+
+---
+
+## Architecture Overview
+
+6-crate Cargo workspace:
+
+| Crate | Role |
+|-------|------|
+| `oni-core` | Config, types, personality system, error handling |
+| `oni-agent` | Agent loop, orchestrator, tools, conversation, preferences, knowledge graph |
+| `oni-ollama` | Ollama HTTP client, model router (5 tiers), health checks |
+| `oni-tui` | Ratatui TUI app, 3 views, widgets, theming |
+| `oni-db` | SQLite persistence (conversations, tools, preferences, rules) |
+| `oni-context` | File indexer, FTS5 retrieval, symbol extraction, file watcher |
+
+Entry point: `src/main.rs` (clap CLI, routes to crates).
+
+---
+
+## Configuration
+
+TOML format. Merged in order: built-in defaults → `~/.config/oni/oni.toml` → `./.oni/oni.toml` (project).
+
+Model tiers map to actual Ollama model names in `oni.toml`. Defaults:
+
+| Tier | Purpose | Default |
+|------|---------|---------|
+| Heavy | Planning, reasoning | `qwq:32b` |
+| Medium | Execution, coding | `qwen2.5-coder:14b` |
+| General | Critic, review | `llama3.1:8b` |
+| Fast | Quick answers | `llama3.2:3b` |
+| Embed | Context embedding | `nomic-embed-text` |
 
 ---
 
 ## Document Index
 
 | File | Contents |
-|---|---|
-| `README.md` | Vision, goals, non-goals (this file) |
-| `TECH_STACK.md` | Full stack decisions with rationale |
-| `ARCHITECTURE.md` | System architecture, data flow, module map |
-| `FEATURES.md` | Complete feature specifications |
-| `PHASES.md` | Build roadmap, milestones, exit criteria |
-| `DESIGN_SYSTEM.md` | Visual language, colour, typography, motion |
-| `TESTING.md` | Unit, integration, E2E, and eval strategy |
-| `USER_TESTING.md` | UI/UX testing plan, scripts, metrics |
-| `API_CONTRACTS.md` | Internal interfaces, message formats, schemas |
-| `SECURITY.md` | Auth model, permissions, threat model |
-| `CONTRIBUTING.md` | Dev setup, conventions, PR process |
-
----
-
-## Vision
-
-Most AI coding tools have the same failure mode: they optimise for the demo, not the workflow. They require API keys that cost money. They interrupt the developer's mental model with context switches. They forget everything between sessions. They never learn your preferences.
-
-ONI is built on a different premise:
-
-**An agent should feel like a member of your team, not a chatbot you query.**
-
-It should know your codebase, remember decisions you've made together, learn how you like to work, surface tools proactively, and operate in the background while you think. It should be opinionated, direct, and honest — not reassuring and verbose.
-
----
-
-## Core Principles
-
-### 1. OAuth-first, no API key
-Non-commercial users access Claude via `oni login` — a standard OAuth 2.0 PKCE flow against claude.ai. No credit card, no Anthropic console, no API key. This is the primary access model for ONI. Commercial users can supply an API key as an override.
-
-### 2. Terminal-native
-ONI lives in the terminal. It does not require a browser, a GUI, or a VS Code extension. Three interaction modes:
-- `:` prefix inline in any ZSH/Bash shell
-- `oni ask` piped from stdin
-- `oni chat` full REPL
-
-### 3. Adaptive and learning
-ONI learns user preferences on tool use from every session. It proposes tools before using them, captures accept/reject signals, and crystallises learned behaviour into persistent rules. Over time it stops asking and just knows.
-
-### 4. Three sub-agents, one voice
-ONI's internal architecture uses three named sub-agents operating within a single Claude context:
-- **Σ Planner** — decomposes missions, sets scope, flags ambiguity before execution
-- **⚡ Executor** — runs the plan, calls tools, writes files, reports completed actions only
-- **⊘ Critic** — reviews output post-task, has veto power, can requeue to Planner
-
-All three present through a single terse, direct personality. Not an assistant. An operator.
-
-### 5. Mission Control
-A persistent ink-rendered TUI dashboard showing: active task queue, token burn rate, tool call log, active file diff, claude.ai sync status, sub-agent states. Invoked via `oni mc`.
-
----
-
-## Non-Goals
-
-- **Not a team tool.** No Slack integration, no org-wide deployment, no multi-user features in v1.
-- **Not a VS Code extension.** Terminal-first. Editor integrations are post-v1.
-- **Not a model-agnostic tool.** ONI is built for Claude specifically. Model switching is not a design goal.
-- **Not an autonomous agent.** ONI does not act without user-initiated sessions. It has no cron jobs or always-on background processes beyond the sync daemon.
-- **Not for commercial use without API key.** OAuth access is explicitly for personal, non-commercial use per Anthropic ToS.
-
----
-
-## Inspiration and References
-
-| Reference | What we take |
-|---|---|
-| **Claude Code** | Core agentic loop, tool design, permission model |
-| **ForgeCode** | ZSH/Bash inline `:` prefix trigger, codebase context engine |
-| **Droid (Factory)** | Background async tasks, CI/CD self-healing, JSON event streams, fail-safe permissions |
-| **OpenClaw** | Personality system, named sub-agents, friction-reduction philosophy |
-| **OpenBlock** | MCP plugin architecture pattern |
-| **Marathon (Bungie)** | Visual design language ("Graphic Realism") |
-
----
-
-## Tagline
-
-**ONI. Onboard Neural Intelligence. Ship or die.**
+|------|---------|
+| `README.md` | Project overview (this file) |
+| `ARCHITECTURE.md` | Detailed architecture — crates, data flows, subsystems |
+| `FEATURES.md` | Full feature specifications |
+| `DESIGN_SYSTEM.md` | Visual language, colour palette, theming |
+| `SECURITY.md` | Permissions model, threat model |
+| `FUTURE_WORK.md` | Planned work, unactivated infrastructure |

@@ -1,0 +1,15 @@
+name: critic_flags_todo_leftover
+description: Critic should flag incomplete implementations with TODO or FIXME left behind
+tier: general
+input:
+  - role: user
+    content: "implement the retry logic for failed HTTP requests"
+  - role: assistant
+    content: "Added retry function. Note: TODO - handle timeout errors properly. FIXME - exponential backoff not implemented yet."
+assertions:
+  - type: contains_any
+    values: ["incomplete", "TODO", "FIXME", "not implemented", "flag", "reject", "unfinished"]
+  - type: not_contains
+    value: "looks complete"
+  - type: not_contains
+    value: "approved"

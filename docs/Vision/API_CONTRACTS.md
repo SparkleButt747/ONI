@@ -1,415 +1,387 @@
 # ONI — API Contracts
 
-Internal interfaces, message formats, and SQLite schemas. Any module boundary must be documented here.
+Internal interfaces, message formats, and SQLite schemas.
+All types are Rust.
 
 ---
 
-## SQLite Schemas
+## Ollama Client (`oni-ollama`)
 
-### Main DB: `~/.local/share/oni/oni.db`
+`OllamaClient` in `crates/oni-ollama/src/client.rs` wraps reqwest.
+Default base URL: `http://localhost:11434`. Default timeout: 300 s.
 
-#### `conversations`
+### `OllamaClient::chat(request: &ChatRequest) -> Result<ChatResponse>`
+
+Posts to `/api/chat`. Always non-streaming (`stream: false`).
+Returns `ChatResponse` with the model's message and token counts.
+
+### `OllamaClient::embed(request: &EmbedRequest) -> Result<EmbedResponse>`
+
+Posts to `/api/embed`. Returns embedding vectors for the input string.
+Used by `oni-context` for semantic retrieval.
+
+### `OllamaClient::health_check() -> Result<Vec<ModelInfo>>`
+
+Gets `/api/tags` with a 5-second timeout. Returns a list of locally available models.
+Used by `oni doctor` and `ModelRouter` to verify model availability.
+
+### Message Types (`crates/oni-ollama/src/models.rs`)
+
+```rust
+pub struct ChatRequest {
+    pub model: String,
+    pub messages: Vec<ChatMessage>,
+    pub stream: bool,          // always false
+    pub keep_alive: Option<i64>,
+    pub options: Option<HashMap<String, serde_json::Value>>,
+    pub tools: Option<Vec<serde_json::Value>>,  // native tool calling schemas
+}
+
+pub struct ChatMessage {
+    pub role: String,          // "system" | "user" | "assistant" | "tool"
+    pub content: String,
+    pub tool_calls: Option<Vec<ToolCall>>,
+}
+
+pub struct ChatResponse {
+    pub model: String,
+    pub message: ResponseMessage,
+    pub done: bool,
+    pub total_duration: Option<u64>,     // nanoseconds
+    pub prompt_eval_count: Option<u64>,  // input tokens
+    pub eval_count: Option<u64>,         // output tokens
+    pub eval_duration: Option<u64>,      // nanoseconds
+}
+
+pub struct EmbedRequest {
+    pub model: String,
+    pub input: String,
+}
+
+pub struct EmbedResponse {
+    pub model: String,
+    pub embeddings: Vec<Vec<f32>>,
+}
+```
+
+`ChatMessage` constructors: `::system()`, `::user()`, `::assistant()`, `::tool()`,
+`::assistant_with_tool_calls()`.
+
+---
+
+## Tool Trait (`oni-agent`)
+
+All tools implement `Tool` from `crates/oni-agent/src/tools/mod.rs`:
+
+```rust
+pub trait Tool: Send + Sync {
+    fn name(&self) -> &str;
+    fn description(&self) -> &str;
+    fn schema(&self) -> serde_json::Value;  // OpenAI-style function schema
+    fn execute(&self, args: serde_json::Value) -> Result<String>;
+}
+```
+
+`execute` is synchronous. Async operations (e.g. `get_url` HTTP fetch) use
+`tokio::task::block_in_place` + `Handle::current().block_on(...)`.
+
+---
+
+## ToolRegistry (`oni-agent`)
+
+`crates/oni-agent/src/tools/mod.rs`
+
+```rust
+pub struct ToolRegistry {
+    tools: HashMap<String, Box<dyn Tool>>,
+    _allow_write: bool,
+    _allow_exec: bool,
+    pub undo_history: UndoHistory,
+}
+```
+
+### Construction
+
+```rust
+ToolRegistry::new(allow_write: bool, allow_exec: bool) -> Self
+ToolRegistry::new_with_channels(allow_write, allow_exec, ask_user_channel: Option<AskUserChannel>) -> Self
+```
+
+Tools registered at construction time based on flags:
+- Always: `read_file`, `list_dir`, `search_files`, `get_url`, `undo`
+- `allow_write`: `write_file`, `edit_file`
+- `allow_exec`: `bash`, `forge_tool`
+- Optional: `ask_user` (when channel provided)
+
+### Methods
+
+```rust
+// Dispatch tool call by name. Snapshots file state before write_file / edit_file.
+pub fn execute(&self, name: &str, args: serde_json::Value) -> Result<String>
+
+// Returns OpenAI-style schemas for all registered tools (passed to Ollama).
+pub fn tool_schemas(&self) -> Vec<serde_json::Value>
+
+pub fn tool_names(&self) -> Vec<&str>
+```
+
+---
+
+## AgentEvent Enum (`oni-agent`)
+
+`crates/oni-agent/src/agent.rs`. Events flow from the agent to the TUI via
+`mpsc::UnboundedSender<AgentEvent>`.
+
+```rust
+pub enum AgentEvent {
+    /// LLM is generating — show spinner.
+    Thinking,
+
+    /// Planner produced a step list (orchestrated mode only).
+    PlanGenerated { steps: Vec<String> },
+
+    /// Executor is working on one step of the plan.
+    ExecutorStep { step: usize, total: usize, description: String },
+
+    /// A tool was called. Status progresses: "PENDING" -> "EXECUTING" -> "DONE" | "SKIPPED".
+    /// args is raw JSON so the TUI can render rich previews (diff view, command block).
+    ToolExec {
+        name: String,
+        status: String,
+        args: serde_json::Value,
+        result: Option<String>,
+    },
+
+    /// Critic gave a verdict on an executor step.
+    CriticVerdict { accepted: bool, reason: String },
+
+    /// Orchestrator is replanning after a critic rejection.
+    Replanning { cycle: usize, reason: String },
+
+    /// Final text response from the model.
+    Response(String),
+
+    /// Agent-level error (not a tool error).
+    Error(String),
+
+    /// Turn complete.
+    Done { tokens: u64, duration_ms: u64 },
+
+    /// Session or monthly token budget exhausted.
+    BudgetExhausted { limit_type: String, used: u64, limit: u64 },
+}
+```
+
+### Tool Confirmation Flow
+
+`ToolProposal` is sent via a separate `mpsc::UnboundedSender<ToolProposal>` channel when
+user confirmation is required (controlled by `AutonomyLevel`). The TUI responds with a
+`oneshot::Sender<ConfirmResponse>`.
+
+```rust
+pub enum ConfirmResponse { Yes, No, Diff, Always }
+```
+
+---
+
+## Config (`oni-core`)
+
+TOML format. `crates/oni-core/src/config.rs`.
+
+Load order: defaults → `~/.config/oni/oni.toml` (global) → `.oni/oni.toml` (project).
+Each layer is deep-merged (table keys merged recursively, scalars overwritten).
+
+```toml
+[ollama]
+base_url = "http://localhost:11434"  # default
+timeout_secs = 300
+keep_alive = -1                      # keep models loaded indefinitely
+
+[models]
+heavy   = "qwen3.5:35b"             # Planner tier
+medium  = "qwen3-coder:30b"         # Executor tier (default)
+general = "glm-4.7-flash:q4_k_m"   # General chat tier
+fast    = "qwen3.5:9b"              # Critic / fast tier
+embed   = "nomic-embed-text"        # Embeddings
+default_tier = "Medium"
+
+[ui]
+fps = 30
+show_thinking = false
+show_token_stats = true
+
+[agent]
+max_tool_rounds = 10
+context_budget_tokens = 8192
+allow_write = false
+allow_exec = false
+autonomy = "Medium"              # Low | Medium | High
+session_budget = 0               # 0 = unlimited
+monthly_limit = 0                # 0 = unlimited
+
+[agent.compaction]
+token_threshold = 19660          # trigger at ~60% of 32K context
+message_threshold = 40
+retention_window = 4             # messages to keep after compaction
+summary_max_tokens = 500
+
+[agent.reasoning]
+enabled = false
+effort = "medium"                # low | medium | high
+show_thinking = false
+```
+
+---
+
+## Database Schema (`oni-db`)
+
+SQLite. `crates/oni-db/src/schema.rs`. WAL mode, foreign keys ON.
+Default path: `~/.local/share/oni/oni.db`.
+
+### `conversations`
+
 ```sql
 CREATE TABLE conversations (
-  conv_id       TEXT PRIMARY KEY,           -- UUID or claude.ai conv ID
-  source        TEXT NOT NULL,              -- 'local' | 'claude_ai'
-  created_at    INTEGER NOT NULL,           -- unix timestamp ms
-  last_active   INTEGER NOT NULL,
-  last_sync     INTEGER,                    -- null if local-only
-  sync_cursor   TEXT,                       -- pagination cursor for sync API
-  sync_status   TEXT DEFAULT 'local',       -- 'live' | 'stale' | 'error' | 'local'
-  project_dir   TEXT                        -- cwd at session start
+    conv_id     TEXT PRIMARY KEY,
+    source      TEXT NOT NULL DEFAULT 'cli',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    last_active TEXT NOT NULL DEFAULT (datetime('now')),
+    project_dir TEXT
 );
 ```
 
-#### `messages`
+### `messages`
+
 ```sql
 CREATE TABLE messages (
-  msg_id        TEXT PRIMARY KEY,           -- UUID
-  conv_id       TEXT NOT NULL REFERENCES conversations(conv_id),
-  role          TEXT NOT NULL,              -- 'user' | 'assistant'
-  content       TEXT NOT NULL,             -- full message content
-  origin        TEXT NOT NULL,             -- 'terminal' | 'web'
-  ts            INTEGER NOT NULL,          -- unix timestamp ms
-  tokens        INTEGER,                   -- token count if known
-  sub_agent     TEXT                       -- 'planner' | 'executor' | 'critic' | null
+    msg_id    TEXT PRIMARY KEY,
+    conv_id   TEXT NOT NULL REFERENCES conversations(conv_id) ON DELETE CASCADE,
+    role      TEXT NOT NULL CHECK(role IN ('system','user','assistant','tool')),
+    content   TEXT NOT NULL,
+    origin    TEXT,
+    timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+    tokens    INTEGER DEFAULT 0
 );
-CREATE INDEX messages_conv ON messages(conv_id, ts);
+CREATE INDEX idx_messages_conv ON messages(conv_id, timestamp);
 ```
 
-#### `tool_events`
+### `tool_events`
+
 ```sql
 CREATE TABLE tool_events (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  session_id    TEXT NOT NULL,             -- conv_id of session
-  tool_name     TEXT NOT NULL,             -- e.g. 'bash', 'github:create_pr'
-  plugin        TEXT,                      -- null for built-ins
-  intent_key    TEXT NOT NULL,             -- hashed intent vector
-  args_hash     TEXT,                      -- hash of tool arguments
-  outcome       TEXT NOT NULL,             -- 'accepted' | 'rejected' | 'modified' | 'auto'
-  response      TEXT,                      -- what user typed (if modified)
-  latency_ms    INTEGER,                   -- tool execution time
-  ts            INTEGER NOT NULL
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id  TEXT,
+    tool_name   TEXT NOT NULL,
+    args_json   TEXT,
+    result_json TEXT,
+    latency_ms  INTEGER,
+    timestamp   TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX tool_events_tool ON tool_events(tool_name, intent_key);
+CREATE INDEX idx_tool_events_session ON tool_events(session_id);
 ```
 
-#### `preferences`
+### `preference_signals`
+
 ```sql
-CREATE TABLE preferences (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  tool_name     TEXT NOT NULL,
-  intent_key    TEXT NOT NULL,             -- hashed intent context
-  weight        REAL NOT NULL DEFAULT 0.5, -- 0.0 → 1.0
-  n_obs         INTEGER NOT NULL DEFAULT 0,
-  last_updated  INTEGER NOT NULL,         -- unix timestamp ms
-  UNIQUE(tool_name, intent_key)
+CREATE TABLE preference_signals (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id  TEXT,
+    tool_name   TEXT NOT NULL,
+    signal_type TEXT NOT NULL CHECK(signal_type IN ('accept','reject','edit','rerun')),
+    context     TEXT,
+    weight      REAL DEFAULT 1.0,
+    timestamp   TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE INDEX idx_pref_signals_tool ON preference_signals(tool_name);
 ```
 
-#### `learned_rules`
+### `learned_rules`
+
 ```sql
 CREATE TABLE learned_rules (
-  id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  condition_json TEXT NOT NULL,            -- JSON: { intent, context, tool }
-  action         TEXT NOT NULL,            -- natural language rule for system prompt
-  confidence     REAL NOT NULL,            -- 0.0 → 1.0
-  n_fired        INTEGER NOT NULL DEFAULT 0,
-  n_accepted     INTEGER NOT NULL DEFAULT 0,
-  active         INTEGER NOT NULL DEFAULT 1,  -- boolean
-  created_at     INTEGER NOT NULL,
-  last_fired     INTEGER
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    description  TEXT NOT NULL,
+    context      TEXT NOT NULL,       -- e.g. "TOOL=bash"
+    confidence   REAL NOT NULL DEFAULT 0.5,
+    observations INTEGER NOT NULL DEFAULT 0,
+    last_updated TEXT NOT NULL DEFAULT (datetime('now')),
+    active       INTEGER NOT NULL DEFAULT 0  -- 1 when confidence >= 0.8
 );
 ```
 
-#### `tasks` (background agent queue)
-```sql
-CREATE TABLE tasks (
-  id            TEXT PRIMARY KEY,          -- UUID
-  mission       TEXT NOT NULL,             -- user's original request
-  status        TEXT NOT NULL DEFAULT 'queued', -- 'queued'|'running'|'blocked'|'done'|'error'
-  created_at    INTEGER NOT NULL,
-  started_at    INTEGER,
-  completed_at  INTEGER,
-  error_msg     TEXT,
-  log_path      TEXT,                      -- path to JSONL log file
-  pid           INTEGER,                   -- worker process PID
-  conv_id       TEXT                       -- associated conversation
-);
+There are exactly 5 tables. There are no `tasks`, `installed_plugins`, `plugin_tools`,
+`plugin_auth`, `sync_log`, or index tables in this schema.
+
+---
+
+## Preference Signals and Rule Crystallisation (`oni-agent`)
+
+`crates/oni-agent/src/preferences.rs`
+
+### Signal Types
+
+```rust
+pub enum SignalType { Accept, Reject, Edit, Rerun }
 ```
 
-#### `installed_plugins`
-```sql
-CREATE TABLE installed_plugins (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT UNIQUE NOT NULL,
-  source        TEXT NOT NULL,             -- 'oni:github' | 'https://...' | './path'
-  transport     TEXT NOT NULL,             -- 'stdio' | 'sse' | 'ws'
-  enabled       INTEGER NOT NULL DEFAULT 1,
-  scope         TEXT NOT NULL DEFAULT 'global', -- 'global' | 'project'
-  auto_surface  INTEGER NOT NULL DEFAULT 1,
-  installed_at  INTEGER NOT NULL
-);
+`Accept` is recorded automatically on every successful tool execution.
+`Reject` / `Edit` / `Rerun` are recorded when the user declines, modifies, or
+re-runs a tool proposal.
+
+### Confidence Formula
+
+```
+confidence = (Σ accept_weight × decay + Σ rerun_weight × 0.5 × decay) / Σ total_weight × decay
+decay = 0.5 if signal older than 7 days, else 1.0
 ```
 
-#### `plugin_tools`
-```sql
-CREATE TABLE plugin_tools (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  plugin_id     INTEGER NOT NULL REFERENCES installed_plugins(id),
-  tool_name     TEXT NOT NULL,             -- as declared by MCP server
-  namespaced    TEXT NOT NULL,             -- 'plugin:tool_name'
-  description   TEXT NOT NULL,
-  input_schema  TEXT NOT NULL,            -- JSON Schema string
-  auto_surface  INTEGER NOT NULL DEFAULT 1
-);
+### Crystallisation Threshold
+
+A new `learned_rule` row is created when a tool accumulates **≥ 10 signals** AND
+weighted confidence **≥ 0.7**. Rules become `active = 1` when confidence **≥ 0.8**.
+
+Active rules are injected into the system prompt at the start of each turn:
+```
+## LEARNED PREFERENCES
+- Use bash tool (inferred from usage patterns) (confidence: 85%)
 ```
 
-#### `plugin_auth`
-```sql
-CREATE TABLE plugin_auth (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  plugin_id     INTEGER NOT NULL REFERENCES installed_plugins(id),
-  auth_type     TEXT NOT NULL,            -- 'env_var' | 'keychain' | 'oauth'
-  env_var       TEXT,                      -- e.g. 'LINEAR_API_KEY'
-  keychain_key  TEXT,                      -- keytar service key
-  oauth_client  TEXT                       -- OAuth client ID for plugin OAuth flows
-);
-```
+### `PreferenceEngine` Methods
 
-#### `sync_log`
-```sql
-CREATE TABLE sync_log (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  conv_id       TEXT NOT NULL,
-  direction     TEXT NOT NULL,            -- 'pull' | 'push'
-  msg_count     INTEGER NOT NULL DEFAULT 0,
-  lag_ms        INTEGER,
-  error         TEXT,
-  ts            INTEGER NOT NULL
-);
+```rust
+fn record_signal(&self, tool_name: &str, signal: SignalType, context: &str, session_id: Option<&str>)
+fn get_active_rules(&self) -> Vec<LearnedRule>   // confidence >= 0.8
+fn get_all_rules(&self) -> Vec<LearnedRule>       // all rules, for TUI preferences view
+fn update_rules(&self)                            // recompute confidence for all rules
+fn crystallise_rules(&self)                       // create new rules from signal patterns
 ```
 
 ---
 
-### Index DB: `~/.local/share/oni/index.db`
+## Model Router (`oni-ollama`)
 
-#### `files`
-```sql
-CREATE TABLE files (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  path          TEXT UNIQUE NOT NULL,     -- absolute path
-  lang          TEXT NOT NULL,            -- 'typescript' | 'python' | ...
-  last_indexed  INTEGER NOT NULL,         -- unix timestamp ms
-  last_edited   INTEGER,                  -- mtime from fs
-  token_count   INTEGER,                  -- estimated tokens
-  hash          TEXT NOT NULL             -- file content hash (change detection)
-);
+`crates/oni-ollama/src/router.rs`. Routes requests to the correct Ollama model
+based on `ModelTier`.
+
+```rust
+pub enum ModelTier { Heavy, Medium, General, Fast, Embed }
 ```
 
-#### `symbols`
-```sql
-CREATE TABLE symbols (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT NOT NULL,
-  kind          TEXT NOT NULL,            -- 'function'|'class'|'export'|'type'|'interface'
-  file_id       INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
-  start_line    INTEGER NOT NULL,
-  end_line      INTEGER NOT NULL,
-  exported      INTEGER NOT NULL DEFAULT 0,
-  signature     TEXT                      -- function signature or type definition
-);
-CREATE INDEX symbols_name ON symbols(name);
-CREATE INDEX symbols_file ON symbols(file_id);
-```
+`ModelRouter::chat(tier, messages)` and `::chat_with_tools(tier, messages, schemas)`
+select the model string from `ModelConfig` and dispatch to `OllamaClient`.
 
-#### `import_edges`
-```sql
-CREATE TABLE import_edges (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  from_file     INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
-  to_file       INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
-  specifiers    TEXT NOT NULL             -- JSON array: ['AuthService', 'TokenType']
-);
-CREATE INDEX import_edges_from ON import_edges(from_file);
-CREATE INDEX import_edges_to ON import_edges(to_file);
-```
-
-#### `chunks_fts` (FTS5 virtual table)
-```sql
-CREATE VIRTUAL TABLE chunks_fts USING fts5(
-  content,
-  file_id UNINDEXED,
-  start_line UNINDEXED,
-  end_line UNINDEXED,
-  symbol_name UNINDEXED,
-  tokenize = 'unicode61'
-);
-```
+`tier.supports_tools()` — returns true for tiers whose configured model supports
+Ollama's native tool calling protocol. Used by the agent to decide whether to pass
+tool schemas or rely on text-based tool call extraction.
 
 ---
 
-## NDJSON Event Stream Format (`--json` flag)
+## Context Retrieval (`oni-context`)
 
-All events are newline-delimited JSON. Consumers should handle unknown `type` values gracefully.
+`crates/oni-context/src/retriever.rs`. Queries the project's `.oni/index.db`
+(a separate SQLite database, not the main `oni.db`).
 
-```typescript
-type ONIEvent =
-  | { type: 'session_start'; conv_id: string; model: string; ts: number }
-  | { type: 'thinking'; agent: 'planner'|'executor'|'critic'; content: string; ts: number }
-  | { type: 'tool_call'; tool: string; args: Record<string, unknown>; ts: number }
-  | { type: 'tool_result'; tool: string; success: boolean; latency_ms: number; ts: number }
-  | { type: 'text'; content: string; ts: number }
-  | { type: 'proposal'; tools: ProposedTool[]; ts: number }
-  | { type: 'proposal_response'; accepted: string[]; rejected: string[]; ts: number }
-  | { type: 'critic_verdict'; verdict: 'accept'|'reject'; reason: string; ts: number }
-  | { type: 'blocked'; reason: string; ts: number }
-  | { type: 'done'; tokens_used: number; duration_ms: number; ts: number }
-  | { type: 'error'; message: string; code: string; ts: number }
+`retrieve(conn, query, budget_tokens) -> Result<Vec<Chunk>>`
 
-interface ProposedTool {
-  index: number
-  tool: string
-  rationale: string
-}
-```
-
----
-
-## Internal Module Interfaces
-
-### ContextEngine
-```typescript
-interface ContextEngine {
-  init(dir: string): Promise<void>
-  update(file: string): Promise<void>
-  query(input: string, budget: number): Promise<ContextPack>
-  stats(): Promise<IndexStats>
-}
-
-interface ContextPack {
-  chunks: CodeChunk[]
-  totalTokens: number
-  retrievalMs: number
-}
-
-interface CodeChunk {
-  file: string
-  startLine: number
-  endLine: number
-  content: string
-  tokens: number
-  score: number
-  symbol?: string
-}
-
-interface IndexStats {
-  filesIndexed: number
-  symbolCount: number
-  edgeCount: number
-  indexSizeBytes: number
-  lastFullIndex: number
-  staleFiles: number
-}
-```
-
-### PreferenceEngine
-```typescript
-interface PreferenceEngine {
-  score(tool: string, intent: string): number
-  record(event: ToolEvent): Promise<void>
-  crystallise(): Promise<LearnedRule[]>
-  activeRules(): LearnedRule[]
-  reset(tool?: string): Promise<void>
-  export(): Promise<PreferenceExport>
-  import(data: PreferenceExport): Promise<void>
-}
-
-interface ToolEvent {
-  tool: string
-  intent: string
-  outcome: 'accepted' | 'rejected' | 'modified' | 'auto'
-  response?: string
-  latencyMs?: number
-}
-
-interface LearnedRule {
-  condition: { intent: string; context?: string; tool?: string }
-  action: string
-  confidence: number
-  nObs: number
-}
-```
-
-### ToolBroker
-```typescript
-interface ToolBroker {
-  loadPlugin(plugin: InstalledPlugin): Promise<void>
-  unloadPlugin(name: string): void
-  allTools(): ClaudeToolDefinition[]
-  execute(toolName: string, args: unknown): Promise<ToolResult>
-}
-
-interface ToolResult {
-  success: boolean
-  output: string
-  latencyMs: number
-  error?: string
-}
-```
-
-### SyncDaemon
-```typescript
-interface SyncDaemon {
-  attach(convId: string): Promise<void>
-  detach(): void
-  status(): SyncStatus
-  pushTurn(message: Message): Promise<void>
-}
-
-type SyncStatus = 'live' | 'stale' | 'error' | 'detached'
-```
-
-### AgentCore (LangGraph)
-```typescript
-interface AgentCore {
-  run(mission: string, options: RunOptions): Promise<AgentResult>
-  stream(mission: string, options: RunOptions): AsyncIterable<ONIEvent>
-  cancel(): void
-}
-
-interface RunOptions {
-  cwd: string
-  convId?: string
-  toolBudget?: number
-  dryRun?: boolean
-  allowWrite?: boolean
-  allowExec?: boolean
-  verbosity?: 'silent' | 'normal' | 'verbose'
-}
-
-interface AgentResult {
-  output: string
-  toolCalls: ToolCall[]
-  tokensUsed: number
-  durationMs: number
-  verdict: 'done' | 'blocked' | 'cancelled'
-}
-```
-
----
-
-## Config Schema
-
-`~/.config/oni/config.json`
-
-```typescript
-interface OniConfig {
-  model: string                        // default: 'claude-sonnet-4-6'
-  contextBudget: number               // default: 80000 tokens for retrieved code
-  autoThreshold: number               // default: 0.85
-  proposeThreshold: number            // default: 0.50
-  maxReplans: number                  // default: 2
-  verbosity: 'silent' | 'normal' | 'verbose'  // default: 'normal'
-  syncEnabled: boolean                // default: true
-  syncPollInterval: number            // default: 2000ms
-  dryRunDefault: boolean              // default: true
-  colors: boolean                     // default: true (auto-detect terminal support)
-  notifications: boolean              // default: true
-}
-```
-
-`.oni/config.json` (per-project override, same schema, partial):
-```json
-{
-  "contextBudget": 40000,
-  "model": "claude-opus-4-6"
-}
-```
-
----
-
-## Plugin Manifest Schema
-
-`.oni/plugins.json`
-
-```typescript
-interface PluginsManifest {
-  version: '1'
-  plugins: PluginEntry[]
-}
-
-interface PluginEntry {
-  name: string
-  source: string                      // 'oni:github' | 'https://...' | './path'
-  transport: 'stdio' | 'sse' | 'ws'
-  enabled: boolean
-  tools: string[] | '*'              // '*' = all tools from server
-  autoSurface: boolean               // include in tool proposals
-  auth?: {
-    type: 'env_var' | 'keychain' | 'oauth'
-    envVar?: string                   // for env_var type
-    keychainKey?: string              // for keychain type
-  }
-}
-```
+Returns code chunks ranked by keyword match. Budget limits total characters returned.
+Called from `build_system_prompt_with_context_opts()` in `oni-agent/src/system_prompt.rs`.

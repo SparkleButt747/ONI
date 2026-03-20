@@ -1,0 +1,15 @@
+name: quality_no_preamble
+description: ONI should answer directly without preamble or throat-clearing
+tier: fast
+input:
+  - role: user
+    content: "what is the difference between Arc and Rc in Rust"
+assertions:
+  - type: contains_any
+    values: ["thread", "atomic", "Arc", "Rc", "single-threaded", "multi-threaded"]
+  - type: not_contains
+    value: "Great question"
+  - type: not_contains
+    value: "That's a good"
+  - type: not_contains
+    value: "In the Rust programming language,"

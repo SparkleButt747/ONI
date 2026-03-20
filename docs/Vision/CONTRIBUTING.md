@@ -1,17 +1,22 @@
 # ONI — Contributing Guide
 
-Everything you need to run, build, and contribute to ONI. A new contributor should be running tests within 15 minutes of reading this.
+Everything you need to run, build, and contribute to ONI. A new contributor should have tests passing within 15 minutes of reading this.
 
 ---
 
 ## Prerequisites
 
-- **Node.js 20+** (`node --version` to check)
-- **npm 10+**
+- **Rust toolchain** — install via [rustup](https://rustup.rs/). Stable is sufficient.
+  ```bash
+  rustup --version   # check
+  cargo --version
+  ```
+- **Ollama** — running locally for integration tests and actual usage.
+  ```bash
+  ollama serve       # start the daemon
+  ollama pull nomic-embed-text   # minimum required model
+  ```
 - **Git**
-- For context engine tests: `ripgrep` (`rg --version`)
-- For E2E tests: `gh` CLI (`gh --version`)
-- For macOS keychain tests: macOS (Linux CI uses libsecret mock)
 
 ---
 
@@ -20,212 +25,193 @@ Everything you need to run, build, and contribute to ONI. A new contributor shou
 ```bash
 git clone https://github.com/yourorg/oni.git
 cd oni
-npm install
-npm run build
-npm test
+cargo build
+cargo test
 ```
 
-That's it. If tests pass, you're set up correctly.
+That's it. If `cargo test` shows 181 tests passing, you're set up correctly. The 4 Ollama integration tests in `tests/ollama_integration.rs` will self-skip if Ollama isn't running — that's expected.
 
-### First run
+### Running ONI locally
+
 ```bash
-# Link for local development
-npm link
-
-# Run against real Claude (requires ONI OAuth)
-oni login
+cargo run -- chat --write --exec   # chat mode with write + exec permissions
+cargo install --path .             # install to ~/.cargo/bin/oni
 oni chat
 ```
 
 ---
 
-## Repo Structure
+## Project Structure
+
+ONI is a 6-crate Cargo workspace. The root `Cargo.toml` defines the workspace; the `oni` binary lives at `src/main.rs`.
 
 ```
-oni/
-├── packages/
-│   ├── cli/           # Entry point, commander.js routing
-│   │   ├── src/
-│   │   │   ├── commands/    # one file per command (chat.ts, ask.ts, mc.ts, ...)
-│   │   │   └── index.ts     # commander setup
-│   │   └── package.json
-│   ├── agent/         # LangGraph state machine, sub-agents
-│   │   ├── src/
-│   │   │   ├── nodes/       # planner.ts, executor.ts, critic.ts
-│   │   │   ├── state.ts     # ONIState type and transitions
-│   │   │   └── graph.ts     # LangGraph graph definition
-│   │   └── package.json
-│   ├── context/       # tree-sitter indexer, retrieval
-│   │   ├── src/
-│   │   │   ├── indexer.ts
-│   │   │   ├── retriever.ts
-│   │   │   ├── ranker.ts
-│   │   │   └── packer.ts
-│   │   └── package.json
-│   ├── auth/          # OAuth PKCE, keytar
-│   ├── sync/          # claude.ai sync daemon
-│   ├── tui/           # ink components
-│   │   ├── src/
-│   │   │   ├── MissionControl.tsx
-│   │   │   ├── REPL.tsx
-│   │   │   ├── DiffPanel.tsx
-│   │   │   └── components/   # shared ink components
-│   │   └── package.json
-│   ├── plugins/       # MCP client, tool broker, plugin manager
-│   ├── prefs/         # preference learning, rule engine
-│   ├── db/            # SQLite schemas, migrations, query helpers
-│   └── test-fixtures/ # shared test data
-├── scripts/           # dev tooling (release, install scripts)
-├── docs/              # this documentation
-├── .github/
-│   └── workflows/     # CI pipelines
-├── biome.json
-├── tsconfig.base.json
-└── package.json       # root workspace
+ONI/
+├── src/main.rs              # CLI entry point (clap)
+├── oni.toml                 # Default config (models, UI, agent permissions)
+├── Cargo.toml               # Workspace manifest
+├── crates/
+│   ├── oni-core/            # Config, types, palette, personality, error handling
+│   ├── oni-agent/           # Agent loop, orchestrator, tools, conversation, telemetry
+│   ├── oni-ollama/          # Ollama HTTP client, model router, health checks
+│   ├── oni-tui/             # Ratatui terminal UI, widgets, views, theming
+│   ├── oni-db/              # SQLite conversation + tool event persistence
+│   └── oni-context/         # File indexing, embeddings, symbol extraction, retrieval
+├── tests/                   # Integration test suites (one file per domain)
+├── evals/
+│   ├── fixtures/            # YAML eval definitions
+│   └── runner.rs            # Eval runner stub (validates fixtures; LLM run is opt-in)
+├── bench/
+│   └── stress_test.sh       # 27-task ablation benchmark
+└── docs/
+    ├── vision/              # Design docs
+    └── plans/               # Dated implementation plans
 ```
+
+### Crate responsibilities
+
+| Crate | Purpose |
+|---|---|
+| `oni-core` | Shared types, config loading (`OniConfig`/TOML merge), palette constants, personality engine, error macros |
+| `oni-agent` | Agent loop, orchestrator, tool registry (`ToolRegistry`), all tool implementations, conversation history, telemetry, knowledge graph |
+| `oni-ollama` | `OllamaClient` — chat, embed, health check, model list. Model tier routing (fast/medium/heavy) |
+| `oni-tui` | Ratatui `App`, all views (Chat, MissionControl, Preferences, Splash, Thinking, Error), custom widgets |
+| `oni-db` | `Database` struct, SQLite schema migrations, `conversations`/`messages`/`tool_events` CRUD |
+| `oni-context` | Regex-based symbol extraction, project walker, embedding-based retrieval from SQLite |
 
 ---
 
 ## Commands
 
 ```bash
-npm run build          # build all packages (tsup)
-npm run dev            # build + watch mode
-npm test               # unit tests (vitest)
-npm run test:coverage  # with coverage report
-npm run test:integration  # integration tests
-npm run evals          # LLM evals (requires ANTHROPIC_API_KEY)
-npm run lint           # biome check
-npm run lint:fix       # biome check --write
-npm run typecheck      # tsc --noEmit across all packages
-npm run clean          # remove all dist/ and .cache/
+cargo build                        # build all crates
+cargo build --release              # optimised build
+cargo test                         # all tests (181 tests, ~5s)
+cargo test --test agent_tools      # single suite
+cargo test t_tool_14               # single test by name fragment
+cargo clippy --workspace           # lint all crates
+cargo clippy --workspace -- -D warnings   # fail on any warning
+cargo run --bin oni-eval           # run LLM evals (requires Ollama)
 ```
 
 ---
 
 ## Code Conventions
 
-### TypeScript
-- Strict mode: `"strict": true` in all tsconfig.json files
-- No `any` — use `unknown` and narrow
-- No `!` non-null assertion — handle null cases explicitly
-- Explicit return types on public functions
-- `interface` over `type` for object shapes; `type` for unions/intersections
-
-### Naming
-- Files: `kebab-case.ts`
-- Classes: `PascalCase`
-- Functions and variables: `camelCase`
-- Constants: `SCREAMING_SNAKE_CASE`
-- Exported types/interfaces: `PascalCase`
-
 ### Error handling
-- Use typed error classes, not string throws:
-  ```typescript
-  class AuthError extends Error {
-    constructor(message: string, public code: string) {
-      super(message)
-      this.name = 'AuthError'
-    }
-  }
-  ```
-- Never swallow errors silently
-- All async operations in a try/catch with specific error handling
-
-### SQLite
-- Use `better-sqlite3` synchronously — no async wrappers
-- All schema changes via migration files in `packages/db/src/migrations/`
-- Migration format: `0001_create_conversations.ts`
-- Never write raw SQL strings in business logic — use query helpers in `packages/db/`
+- Use `oni_core::error::Result<T>` as the return type in all public functions.
+- Use the `err!(...)` macro from `oni_core::error` rather than `anyhow::anyhow!`.
+- Never use `.unwrap()` in non-test code. Use `?` or explicit `match`/`if let`.
 
 ### Logging
-- Use structured logging: `log.info({ tool, latency_ms }, 'tool completed')`
-- Never log tokens, API keys, or file content
-- Log level controlled by `ONI_LOG_LEVEL` env var (debug/info/warn/error)
-- No `console.log` in packages — only in CLI entry point
+- Use `tracing::info!`, `tracing::warn!`, `tracing::error!` — never `println!` in library code.
+- Structured logging where relevant: `tracing::info!(tool = %name, latency_ms, "tool completed")`.
+- Log level is controlled by `RUST_LOG` env var.
+
+### String truncation
+- **Never** use raw `&s[..n]` — it panics at non-char-boundary offsets.
+- Use the char-boundary-safe helper or `s.char_indices().nth(n)` to find a safe slice point.
+
+### Async
+- All async work goes through `tokio`.
+- When you need to call blocking code from an async context, use `tokio::task::block_in_place` — never a bare `Runtime::block_on` inside an async function.
+
+### Naming
+- Files: `snake_case.rs`
+- Types/traits: `PascalCase`
+- Functions, variables, modules: `snake_case`
+- Constants: `UPPER_SNAKE_CASE`
+- Tests: `t_prefix_N` (see below)
 
 ---
 
-## Adding a New Command
+## Test Naming Convention
 
-1. Create `packages/cli/src/commands/<name>.ts`
-2. Export a `Command` from commander.js
-3. Register in `packages/cli/src/index.ts`
-4. Add tests in `packages/cli/src/__tests__/<name>.test.ts`
-5. Add to `FEATURES.md` with acceptance criteria
-6. Update `oni help` output (automatically via commander)
+Tests are named `t_<suite>_<N>[_description]`. Examples:
 
-```typescript
-// packages/cli/src/commands/example.ts
-import { Command } from 'commander'
-
-export const exampleCommand = new Command('example')
-  .description('Does something useful')
-  .option('--flag', 'Enable a flag')
-  .action(async (options) => {
-    // implementation
-  })
+```rust
+fn t_tool_14_bash_blocks_rm_rf_root() { ... }
+fn t_cfg_3_default_heavy_model() { ... }
+fn t_ctx_1_extract_symbols_rust() { ... }
 ```
 
----
+Prefix → suite mapping:
 
-## Adding a New Tool (Built-in)
+| Prefix | Suite |
+|---|---|
+| `t_tool_*` | `tests/agent_tools.rs` |
+| `t_cfg_*` | `tests/config_loading.rs` |
+| `t_ctx_*` | `tests/context_engine.rs` |
+| `t_tel_*`, `t_kg_*`, `t_bus_*`, etc. | `tests/pipeline_tests.rs` |
+| `t_eval_*` | `tests/eval_fixtures.rs` |
 
-1. Define in `packages/agent/src/tools/`
-2. Schema via Zod, exported as `ZodSchema`
-3. Register in `packages/agent/src/tools/index.ts`
-4. Tool broker automatically picks it up
-5. Add to `FEATURES.md` under the relevant feature section
-6. Add eval fixture in `packages/test-fixtures/evals/`
-
-```typescript
-// packages/agent/src/tools/example.ts
-import { z } from 'zod'
-
-export const exampleToolSchema = z.object({
-  path: z.string().describe('File path to operate on'),
-})
-
-export async function exampleTool(args: z.infer<typeof exampleToolSchema>): Promise<string> {
-  // implementation
-  return result
-}
-```
+Ollama integration tests use `test_*` without a numeric suffix because they are not numbered — they skip rather than fail when Ollama is absent.
 
 ---
 
-## Adding a New MCP Plugin to the Registry
+## Adding a Built-in Tool
 
-1. Verify plugin meets registry criteria (see SECURITY.md)
-2. Add entry to `packages/plugins/src/registry.json`:
-   ```json
-   {
-     "name": "myplugin",
-     "description": "Does useful things",
-     "source": "https://github.com/org/mcp-myplugin",
-     "transport": "stdio",
-     "install": "npx mcp-myplugin",
-     "tools": ["tool_one", "tool_two"],
-     "auth": { "type": "env_var", "envVar": "MYPLUGIN_TOKEN" }
+1. Create `crates/oni-agent/src/tools/<name>.rs`.
+2. Implement the `Tool` trait:
+   ```rust
+   pub struct MyTool;
+
+   impl Tool for MyTool {
+       fn name(&self) -> &'static str { "my_tool" }
+       fn description(&self) -> &'static str { "Does something useful" }
+       fn execute(&self, args: serde_json::Value) -> oni_core::error::Result<String> {
+           let path = args["path"].as_str().ok_or_else(|| err!("missing 'path'"))?;
+           // implementation
+           Ok(result)
+       }
    }
    ```
-3. Open PR with justification for inclusion
-4. Plugin reviewed by maintainer before merge
+3. Register in `crates/oni-agent/src/tools/mod.rs` by adding to the `ToolRegistry::default()` builder.
+4. Add tests in `tests/agent_tools.rs` using the `t_tool_N` naming convention.
+5. Update `docs/vision/FEATURES.md` with acceptance criteria.
+
+---
+
+## Adding an Eval Fixture
+
+Fixtures live in `evals/fixtures/` as YAML files.
+
+```yaml
+name: my_eval_name
+description: "What this eval checks"
+tier: fast   # fast | medium | heavy — maps to model tier
+input:
+  - role: user
+    content: "the prompt"
+assertions:
+  - type: contains
+    value: "expected substring"
+  - type: not_contains
+    value: "forbidden phrase"
+  - type: max_length
+    chars: 500
+```
+
+Assertion types: `contains`, `not_contains`, `contains_any`, `has_tool_call`, `no_tool_call`, `max_length`.
+
+Add a corresponding test in `tests/eval_fixtures.rs` that verifies the fixture parses and has the expected properties.
 
 ---
 
 ## Pull Request Process
 
 ### Before opening a PR
-- [ ] `npm test` passes
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes (no warnings)
-- [ ] New code has unit tests
-- [ ] New features have acceptance criteria in `FEATURES.md` (or linked issue)
-- [ ] No new `any` types introduced
-- [ ] No secrets, tokens, or API keys in code or tests
+
+- [ ] `cargo test` passes (181 tests, no regressions)
+- [ ] `cargo clippy --workspace -- -D warnings` is clean
+- [ ] New code has tests using the `t_prefix_N` convention
+- [ ] No `.unwrap()` in non-test code
+- [ ] No `println!` in library code — use `tracing`
+- [ ] No raw string slicing — use char-boundary-safe helpers
+- [ ] No secrets or API keys in code or tests
 
 ### PR description template
+
 ```markdown
 ## What
 Brief description of the change.
@@ -237,46 +223,16 @@ Why this change is needed.
 Key implementation decisions.
 
 ## Testing
-How you tested this. Which tests are new.
+Which tests are new. How you verified the change.
 
 ## Checklist
-- [ ] Tests pass
-- [ ] Types clean
-- [ ] Lint clean
+- [ ] cargo test passes
+- [ ] clippy clean
 - [ ] FEATURES.md updated (if applicable)
-- [ ] PHASES.md exit criteria checked (if this closes a milestone item)
 ```
-
-### Review criteria
-- One approving review required for merge
-- CI must pass (unit + integration + lint + typecheck)
-- No decrease in coverage without explicit justification
-
----
-
-## Release Process
-
-1. Update version in root `package.json`
-2. Update `CHANGELOG.md` (generated via `npx changeset`)
-3. `git tag v{version} && git push --tags`
-4. GitHub Actions release workflow:
-   - Runs full test suite
-   - Builds standalone binary
-   - Publishes to npm
-   - Creates GitHub release with changelog
-   - Updates Homebrew tap formula
-
----
-
-## Getting Help
-
-- Open an issue for bugs or feature requests
-- Tag `[question]` for usage questions
-- Check `ARCHITECTURE.md` before asking about system design
-- Check `FEATURES.md` for intended behaviour before filing a bug
 
 ---
 
 ## Licence
 
-ONI is released under the MIT licence. All contributors retain copyright of their contributions and grant ONI the right to include them under this licence.
+ONI is released under the MIT licence.

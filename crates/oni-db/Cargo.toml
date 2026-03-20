@@ -1,0 +1,10 @@
+[package]
+name = "oni-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+oni-core = { path = "../oni-core" }
+rusqlite.workspace = true
+uuid.workspace = true
+tracing.workspace = true

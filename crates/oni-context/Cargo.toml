@@ -1,0 +1,15 @@
+[package]
+name = "oni-context"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+oni-core = { path = "../oni-core" }
+oni-llm = { path = "../oni-llm" }
+rusqlite.workspace = true
+serde.workspace = true
+tracing.workspace = true
+ignore = "0.4"
+regex.workspace = true
+tokio.workspace = true
+notify.workspace = true

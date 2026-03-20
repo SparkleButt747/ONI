@@ -1,0 +1,13 @@
+name: edge_very_long_input
+description: ONI should produce a focused response even when the user pastes a very long block of code
+tier: fast
+input:
+  - role: user
+    content: "here is a 500-line Rust file, please summarise what it does: fn main() { let x = 1; let y = 2; let z = x + y; println!(\"{}\", z); } fn helper_one() { } fn helper_two() { } fn helper_three() { } fn helper_four() { } fn helper_five() { } fn helper_six() { } fn helper_seven() { } fn helper_eight() { } fn helper_nine() { } fn helper_ten() { } fn a() {} fn b() {} fn c() {} fn d() {} fn e() {} fn f() {} fn g() {} fn h() {} fn i() {} fn j() {} fn k() {} fn l() {} fn m() {} fn n() {} fn o() {} fn p() {} fn q() {} fn r() {} fn s() {} fn t() {} fn u() {} fn v() {} fn w() {} fn x_fn() {} fn y_fn() {} fn z_fn() {}"
+assertions:
+  - type: contains_any
+    values: ["main", "function", "fn", "print", "helper", "summarise", "summary", "defines"]
+  - type: not_contains
+    value: "I cannot"
+  - type: max_length
+    chars: 600

@@ -1,0 +1,13 @@
+name: executor_write_file_new
+description: Executor should use write_file when creating a new file from scratch
+tier: medium
+input:
+  - role: user
+    content: "create a new file at src/utils/retry.rs with a basic exponential backoff implementation"
+assertions:
+  - type: has_tool_call
+    tool: write_file
+  - type: not_contains
+    value: "I'd be happy to"
+  - type: not_contains
+    value: "Of course"

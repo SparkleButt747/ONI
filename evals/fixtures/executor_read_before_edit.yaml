@@ -1,0 +1,13 @@
+name: executor_read_before_edit
+description: Executor should call read_file before calling edit_file on any file
+tier: medium
+input:
+  - role: user
+    content: "add a timeout field to the HttpClient struct in src/http.rs"
+assertions:
+  - type: has_tool_call
+    tool: read_file
+  - type: not_contains
+    value: "I would"
+  - type: not_contains
+    value: "I'll go ahead"

@@ -1,0 +1,13 @@
+name: planner_read_before_write
+description: Planner should prioritise reading/understanding code before writing changes
+tier: heavy
+input:
+  - role: user
+    content: "fix the bug in the authentication middleware and add tests for it"
+assertions:
+  - type: contains_any
+    values: ["read", "examine", "look at", "review", "understand", "check"]
+  - type: contains_any
+    values: ["test", "assert", "verify"]
+  - type: not_contains
+    value: "I'd be happy to"

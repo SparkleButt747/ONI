@@ -2,473 +2,202 @@
 
 ---
 
-## Testing Philosophy
+## Overview
 
-ONI is an agent. Agents fail in ways that differ from normal software:
-- Non-deterministic outputs from Claude
-- Tool call sequences that depend on LLM reasoning
-- Preference state that accumulates over sessions
-- External API dependencies (claude.ai, GitHub, MCP servers)
+ONI uses `cargo test` with no external test runner. All integration tests live in `tests/` at the workspace root. The eval framework (`evals/`) is separate and does not run as part of `cargo test`.
 
-Our testing strategy addresses this by separating concerns: deterministic code is unit-tested normally; LLM-dependent behaviour is tested via evals with fixtures; integration is tested with mocked APIs.
+**181 tests total, all passing.**
 
 ---
 
-## Test Pyramid
+## Running Tests
 
-```
-                    ┌──────────┐
-                    │  E2E /   │  ← ~10 tests, slow, real network
-                    │  Smoke   │
-                  ┌─┴──────────┴─┐
-                  │  Integration  │  ← ~80 tests, mocked APIs
-                ┌─┴──────────────┴─┐
-                │    Unit Tests     │  ← ~300 tests, fast, deterministic
-              ┌─┴──────────────────┴─┐
-              │   LLM Evals (offline) │  ← ~50 fixtures, non-deterministic
-              └────────────────────────┘
-```
-
----
-
-## Unit Tests (Vitest)
-
-### Coverage targets
-- `packages/auth/` — 95%+
-- `packages/context/` — 90%+
-- `packages/prefs/` — 90%+
-- `packages/db/` — 85%+
-- `packages/agent/` state machine — 90%+
-- `packages/plugins/` tool broker — 85%+
-
-### What to unit test
-
-**Auth module:**
-```typescript
-// src/auth/__tests__/pkce.test.ts
-describe('PKCE', () => {
-  test('generates code_verifier of valid length', () => {
-    const v = generateVerifier()
-    expect(v.length).toBeGreaterThanOrEqual(43)
-    expect(v.length).toBeLessThanOrEqual(128)
-  })
-
-  test('code_challenge is base64url-encoded SHA-256', async () => {
-    const challenge = await generateChallenge('abc123')
-    expect(challenge).toMatch(/^[A-Za-z0-9_-]+$/)
-  })
-
-  test('challenge differs from verifier', async () => {
-    const v = generateVerifier()
-    const c = await generateChallenge(v)
-    expect(c).not.toBe(v)
-  })
-})
-```
-
-**Context engine:**
-```typescript
-// src/context/__tests__/ranker.test.ts
-describe('Ranker', () => {
-  test('recency decay reduces weight exponentially', () => {
-    const now = Date.now()
-    const oneHourAgo = now - 3600000
-    const w1 = recencyWeight(now)
-    const w2 = recencyWeight(oneHourAgo)
-    expect(w1).toBeGreaterThan(w2)
-    expect(w2).toBeCloseTo(Math.exp(-1/0.5), 3) // half-life 30min
-  })
-
-  test('token budget never exceeded', () => {
-    const chunks = generateChunks(100, 1000) // 100 chunks of 1000 tokens
-    const packed = pack(chunks, { budget: 20000 })
-    const total = packed.reduce((s, c) => s + c.tokens, 0)
-    expect(total).toBeLessThanOrEqual(20000)
-  })
-})
-```
-
-**Preference engine:**
-```typescript
-// src/prefs/__tests__/weights.test.ts
-describe('Preference weights', () => {
-  test('accept signal increases weight', async () => {
-    const db = createTestDb()
-    await recordSignal(db, 'bash', 'debug', 'accept')
-    const w = getWeight(db, 'bash', 'debug')
-    expect(w).toBeGreaterThan(0.5)
-  })
-
-  test('decay applied on read, not write', async () => {
-    const db = createTestDb()
-    insertOldObservation(db, 'web_search', 'debug', 30) // 30 days ago
-    const w = getWeight(db, 'web_search', 'debug')
-    expect(w).toBeLessThan(0.5) // decayed significantly
-  })
-
-  test('always flag sets weight to 1.0 and bypasses proposal', async () => {
-    const db = createTestDb()
-    await recordSignal(db, 'read_file', 'refactor', 'always')
-    const w = getWeight(db, 'read_file', 'refactor')
-    expect(w).toBe(1.0)
-  })
-})
-```
-
-**Tool broker:**
-```typescript
-// src/plugins/__tests__/broker.test.ts
-describe('ToolBroker', () => {
-  test('namespaces plugin tool that conflicts with built-in', async () => {
-    const broker = new ToolBroker()
-    await broker.loadPlugin(mockPlugin({ name: 'github', tools: ['bash'] }))
-    const tools = broker.allTools().map(t => t.name)
-    expect(tools).toContain('bash')           // built-in
-    expect(tools).toContain('github:bash')    // namespaced
-    expect(tools.filter(t => t === 'bash').length).toBe(1) // no dupe
-  })
-
-  test('plugin crash does not remove built-in tools', async () => {
-    const broker = new ToolBroker()
-    await broker.loadPlugin(mockCrashingPlugin())
-    const tools = broker.allTools().map(t => t.name)
-    expect(tools).toContain('read_file')
-    expect(tools).toContain('bash')
-  })
-})
-```
-
-**Agent state machine:**
-```typescript
-// src/agent/__tests__/state.test.ts
-describe('Agent state machine', () => {
-  test('critic reject increments replanCount', async () => {
-    const state = createState()
-    const next = await criticRejectTransition(state)
-    expect(next.replanCount).toBe(1)
-    expect(next.status).toBe('planning')
-  })
-
-  test('replanCount ≥ 2 transitions to blocked', async () => {
-    const state = createState({ replanCount: 2 })
-    const next = await criticRejectTransition(state)
-    expect(next.status).toBe('blocked')
-  })
-
-  test('executor blocker transitions to blocked', async () => {
-    const state = createState()
-    const next = await executorBlockerTransition(state, 'CI requires approval')
-    expect(next.status).toBe('blocked')
-    expect(next.blocker).toBe('CI requires approval')
-  })
-})
-```
-
-### Running unit tests
 ```bash
-npm test                   # all unit tests
-npm test -- --watch        # watch mode
-npm test -- packages/auth  # single package
-npm run test:coverage      # with coverage report
+cargo test                          # all tests
+cargo test --test agent_tools       # single suite
+cargo test t_tool_14                # single test by name fragment
+cargo test -- --nocapture           # show println output
 ```
 
 ---
 
-## Integration Tests
+## Test Naming Convention
 
-Mock external APIs. Test module interactions with realistic data.
+Tests follow the `t_prefix_N` pattern, optionally extended with a description:
 
-### Mocking strategy
-- **Claude API:** `msw` (Mock Service Worker) intercepts fetch, returns fixture SSE streams
-- **claude.ai sync API:** msw intercepts polling endpoints
-- **MCP servers:** mock stdio process with scripted responses
-- **SQLite:** real SQLite in `:memory:` database — not mocked
-- **keytar:** stubbed with in-memory map
-
-### Key integration tests
-
-**Auth flow (PKCE round-trip):**
-```typescript
-test('OAuth PKCE flow stores token in keychain', async () => {
-  const mockServer = startMockAuthServer()
-  const keychainSpy = mockKeytar()
-  
-  await runOniLogin({ port: 3841 })
-  
-  expect(keychainSpy.get('oni-cli', 'access_token')).toBeDefined()
-  expect(keychainSpy.get('oni-cli', 'refresh_token')).toBeDefined()
-  // No token in any config file
-  expect(fs.existsSync('~/.config/oni/token')).toBe(false)
-})
+```
+t_tool_1_read_file_returns_contents
+t_cfg_3_default_heavy_model
+t_ctx_1_extract_symbols_rust
 ```
 
-**Context engine + agent integration:**
-```typescript
-test('context engine chunks injected into system prompt', async () => {
-  const project = scaffoldProject({ files: testProject })
-  await indexProject(project.dir)
-  
-  const captured = []
-  const agent = createAgent({ onAPICall: req => captured.push(req) })
-  await agent.run('explain the auth middleware', { cwd: project.dir })
-  
-  const systemPrompt = captured[0].system
-  expect(systemPrompt).toContain('src/auth/middleware.ts')
-})
+Prefixes map to suites:
+- `t_tool_*` — agent tools
+- `t_cfg_*` — config loading
+- `t_ctx_*` — context engine
+- `t_tel_*`, `t_cap_*`, `t_kg_*`, `t_bus_*`, `t_trace_*`, `t_plan_*`, `t_per_*`, `t_lint_*` — pipeline internals
+- `t_eval_*` — eval fixture validation
+- Ollama tests use `test_*` (no numeric prefix; they self-skip when Ollama isn't running)
+
+---
+
+## Test Suites
+
+### `tests/agent_tools.rs` — 26 tests (T-TOOL-1..26)
+
+Covers all built-in tool implementations via the `Tool` trait. Uses `tempfile::TempDir` for filesystem isolation.
+
+| Range | Tool |
+|---|---|
+| T-TOOL-1..4 | `ReadFileTool` — returns contents, handles missing file, missing arg, truncates >100 KB |
+| T-TOOL-5..8 | `WriteFileTool` — creates files, overwrites, blocks paths outside cwd |
+| T-TOOL-9..11 | `ListDirTool` — lists entries, handles missing dir, respects depth |
+| T-TOOL-12..16 | `BashTool` — runs commands, captures stdout/stderr, blocks `rm -rf /`, blocks `sudo`, enforces timeout |
+| T-TOOL-17..20 | `SearchFilesTool` — regex match, no match, invalid regex, empty dir |
+| T-TOOL-21..26 | `EditFileTool` — replaces occurrence, errors on missing file, errors on no match, handles multiple occurrences, char-boundary-safe |
+
+### `tests/config_loading.rs` — 21 tests (T-CFG-1..21)
+
+Tests `OniConfig`, `ModelConfig`, `AgentConfig`, `UiConfig` defaults and `load_config()` TOML merging.
+
+Key assertions:
+- Default Ollama URL: `http://localhost:11434`
+- Default timeout: 300s
+- Default heavy model: `qwen3.5:35b`
+- Default embed model: `nomic-embed-text`
+- `UiConfig` defaults: `show_token_stats=true`, `show_thinking=false`, `fps=30`
+- `load_config` merges global `~/.config/oni/oni.toml` with project `./oni.toml`; project values win
+- Missing config file returns `OniConfig::default()` without error
+
+### `tests/context_engine.rs` — 13 tests (T-CTX-1..13)
+
+Tests symbol extraction, project indexing, and retrieval from the `oni-context` crate.
+
+| Range | Area |
+|---|---|
+| T-CTX-1..5 | `extract_symbols` — Rust (fn/struct/enum/trait/private), Python (def/class) |
+| T-CTX-6..9 | `index_project` — creates SQLite DB, indexes files, skips binary/target, respects gitignore |
+| T-CTX-10..13 | `retrieve` / `retrieve_symbols` — returns relevant chunks, ranks by query match, empty query returns nothing, handles unindexed project |
+
+### `tests/db_schema.rs` — 13 tests
+
+Tests all 5 tables in the `oni-db` schema against an in-memory SQLite database.
+
+Tables verified: `conversations`, `messages`, `tool_events`, and 2 supporting tables.
+Covers: schema creation, CRUD operations, foreign key constraints, conversation listing, tool event logging.
+
+### `tests/pipeline_tests.rs` — 99 tests
+
+The largest suite. Tests pipeline internals without touching the agent loop or TUI.
+
+| Prefix | Module | Count |
+|---|---|---|
+| `t_tel_*` | `Telemetry`, `FeatureFlags` — enable/disable, serde roundtrip, JSON output | ~8 |
+| `t_cap_*` | `CapabilityFlag` — flag variants, serialisation | ~6 |
+| `t_kg_*` | `KnowledgeGraph` — node/edge add, neighbour lookup, relation types, serialise | ~15 |
+| `t_bus_*` | `MessageBus` — send, receive, capacity, drop on full | ~10 |
+| `t_trace_*` | `ExecutionTrace` — event append, event types, serialise, query by type | ~12 |
+| `t_plan_*` | `PlanStore` — persist/load plans, step status transitions, stale detection | ~14 |
+| `t_per_*` | `personality` — `EmotionalState`, `RelationshipState`, decay, stage transitions | ~22 |
+| `t_lint_*` | `language_for_ext` — extension → language mapping | ~12 |
+
+### `tests/ollama_integration.rs` — 4 tests
+
+Real HTTP calls to Ollama. All tests self-skip gracefully when Ollama isn't running — no `#[ignore]` attribute, just an early return with `eprintln!("SKIP: ...")`.
+
+| Test | What it checks |
+|---|---|
+| `test_health_check` | Ollama is reachable, at least one model listed |
+| `test_has_model` | `has_model("nomic-embed-text")` returns without error |
+| `test_batch_chat_with_any_model` | Non-streaming chat returns non-empty content, `done=true` |
+| `test_embed` | `nomic-embed-text` produces 768-dimensional embeddings |
+
+### `tests/eval_fixtures.rs` — 5 tests (T-EVAL-1..5)
+
+Validates YAML fixture integrity without running any LLM calls.
+
+| Test | Assertion |
+|---|---|
+| `t_eval_1_fixtures_dir_exists` | `evals/fixtures/` directory is present |
+| `t_eval_2_at_least_one_fixture` | At least one `.yaml` file exists |
+| `t_eval_3_all_fixtures_parse` | Every fixture parses cleanly; `name`, `input`, `assertions` all non-empty |
+| `t_eval_4_no_comfort_phrasing_fixture` | `no_comfort_phrasing.yaml` has ≥5 assertions |
+| `t_eval_5_planner_fixture` | `planner_decomposes.yaml` has `tier: heavy` |
+
+---
+
+## Eval Framework
+
+The eval framework validates LLM behaviour against YAML fixtures. It does **not** run as part of `cargo test`. The runner stub is in `evals/runner.rs`; the binary target is `oni-eval`.
+
+### Fixtures — `evals/fixtures/`
+
+Five fixtures:
+
+| File | What it tests |
+|---|---|
+| `no_comfort_phrasing.yaml` | Response contains no filler phrases; max length enforced |
+| `critic_rejects_security.yaml` | Critic flags plaintext secrets |
+| `executor_uses_tools.yaml` | Executor calls the right tool, does not narrate intentions |
+| `concise_response.yaml` | Response stays within token budget |
+| `planner_decomposes.yaml` | Planner produces a structured plan (`tier: heavy`) |
+
+### Assertion types
+
+```
+Contains        value: str           — response must contain substring
+NotContains     value: str           — response must not contain substring
+ContainsAny     values: [str]        — response must contain at least one
+HasToolCall     tool: str            — response must include a call to named tool
+NoToolCall      tool: str            — response must NOT call named tool
+MaxLength       chars: int           — response length under limit
 ```
 
-**Preference learning cycle:**
-```typescript
-test('accept signal raises score above auto-threshold after 10 observations', async () => {
-  const db = createTestDb()
-  
-  for (let i = 0; i < 10; i++) {
-    await recordSignal(db, 'bash', 'debug', 'accept')
-  }
-  
-  const score = computeScore(db, 'bash', 'debug')
-  expect(score).toBeGreaterThanOrEqual(0.85)
-})
-```
+### Runner stub behaviour
 
-**MCP plugin integration:**
-```typescript
-test('github plugin tools appear in Claude API call', async () => {
-  const server = startMockMCPServer({ tools: ['create_pr', 'list_issues'] })
-  const broker = new ToolBroker()
-  await broker.loadPlugin({ name: 'github', transport: 'stdio', process: server })
-  
-  const tools = broker.allTools().map(t => t.name)
-  expect(tools).toContain('github:create_pr')
-  expect(tools).toContain('github:list_issues')
-  expect(tools).toContain('read_file') // built-ins still present
-})
-```
+The current `evals/runner.rs` loads all fixtures and validates their structure without making LLM calls. Each fixture is marked `VALID (N assertions)` if well-formed. This runs as part of eval-fixture CI but does not require Ollama or network access.
 
-### Running integration tests
+To run actual LLM evals (requires Ollama):
 ```bash
-npm run test:integration
+cargo run --bin oni-eval
 ```
 
 ---
 
-## LLM Evals (Offline Fixtures)
+## Benchmark — `bench/stress_test.sh`
 
-LLM behaviour is non-deterministic. We test it with:
-1. **Golden fixtures** — curated input/output pairs tested against exact criteria
-2. **Behavioural assertions** — test that outputs satisfy properties, not exact match
+Runs 27 tasks sequentially against a live ONI instance. Records latency and success/failure per task.
 
-### Eval framework
-Custom eval runner in `packages/evals/`:
-```typescript
-interface Eval {
-  name: string
-  input: { role: 'user' | 'assistant', content: string }[]
-  assertions: Assertion[]
-}
+**Ablation modes** (`--mode` flag):
 
-type Assertion =
-  | { type: 'contains', value: string }
-  | { type: 'not_contains', value: string }
-  | { type: 'has_tool_call', tool: string }
-  | { type: 'no_tool_call', tool: string }
-  | { type: 'sub_agent_prefix', agent: 'planner' | 'executor' | 'critic' }
-  | { type: 'max_length', chars: number }
-```
+| Mode | Flag passed to ONI |
+|---|---|
+| `full` | All features enabled |
+| `no-kg` | `--no-knowledge-graph` |
+| `no-orchestrator` | `--no-orchestrator` |
+| `no-personality` | `--no-personality` |
+| `ablation` | Runs all 4 modes back-to-back |
 
-### Critical evals
+Timeout defaults: `--timeout-easy 120`, `--timeout-medium 300`, `--timeout-hard 600` (seconds).
 
-**Planner decomposes correctly:**
-```yaml
-name: planner_decomposes_multi_file_task
-input:
-  - role: user
-    content: "refactor the auth module to use async/await throughout"
-assertions:
-  - type: sub_agent_prefix
-    agent: planner
-  - type: contains
-    value: "subtask"     # or numbered list
-  - type: not_contains
-    value: "I will"      # executor narrating intention (wrong)
-```
-
-**Executor reports completed actions, not intentions:**
-```yaml
-name: executor_reports_actions_not_intentions
-input:
-  - role: user
-    content: "read the middleware file"
-  - role: assistant
-    content: "[Σ] Plan: read middleware.ts. 1 subtask."
-assertions:
-  - type: has_tool_call
-    tool: read_file
-  - type: not_contains
-    value: "I'm going to"
-  - type: not_contains
-    value: "I will now"
-```
-
-**Critic rejects deliberately bad output:**
-```yaml
-name: critic_rejects_security_issue
-input:
-  - role: user
-    content: "store the JWT secret in the env file"
-  - role: assistant
-    content: "[⚡] Written JWT_SECRET to .env.staging in plaintext."
-assertions:
-  - type: sub_agent_prefix
-    agent: critic
-  - type: contains_any
-    values: ["plaintext", "insecure", "reject", "risk"]
-```
-
-**Personality: no filler phrases:**
-```yaml
-name: no_comfort_phrasing
-input:
-  - role: user
-    content: "why is the build failing"
-assertions:
-  - type: not_contains
-    value: "Great question"
-  - type: not_contains
-    value: "I'd be happy to"
-  - type: not_contains
-    value: "Certainly"
-  - type: not_contains
-    value: "Of course"
-  - type: max_length
-    chars: 500   # concise response
-```
-
-**Context retrieval quality (20 queries):**
-Each query has an expected file in top-3 results. Pass rate target: ≥16/20 (80%).
-
-### Running evals
-```bash
-npm run evals               # run all evals (requires ANTHROPIC_API_KEY)
-npm run evals -- --fixture planner_decomposes  # single eval
-npm run evals -- --report   # save JSON report
-```
-
-Note: evals call the real Claude API. Budget approximately $2–5 per full eval run.
+Results land in `bench/stress_results/`. See `bench/ABLATION_REPORT.md` for the last recorded run.
 
 ---
 
-## E2E / Smoke Tests
+## Untested Areas
 
-Minimal set. Real network, real Claude API. Run in CI on release tags only.
+These modules have no test coverage today:
 
-### Smoke test suite
-```typescript
-describe('E2E Smoke Tests', () => {
-  test('oni login completes PKCE flow', async () => {
-    // Requires browser automation (Playwright)
-    // or a mock claude.ai auth server
-    const result = await runOniLogin()
-    expect(result.exitCode).toBe(0)
-  })
-
-  test('oni ask reads a file and explains it', async () => {
-    const result = await run('echo "explain this" | oni ask', { cwd: testProject })
-    expect(result.stdout).toContain(testProject.knownSymbol)
-    expect(result.exitCode).toBe(0)
-  })
-
-  test('oni chat completes a one-turn session', async () => {
-    const result = await runInteractive(['oni chat', ':q'])
-    expect(result.exitCode).toBe(0)
-  })
-})
-```
-
-### Running E2E
-```bash
-ANTHROPIC_API_KEY=xxx npm run test:e2e
-```
+- **TUI** (`crates/oni-tui/`) — 0 tests. Ratatui widget rendering is not unit-testable without a real terminal buffer harness.
+- **ForgeTool, AskUserTool, GetUrlTool** — tool implementations not yet covered in `agent_tools.rs`
+- **Orchestrator loop** — end-to-end multi-step plan execution
+- **Callbacks and hooks** (`oni-agent/src/callbacks.rs`)
+- **User preferences / learned rules** beyond the pipeline internals
+- **Reflection step** (`oni-agent/src/reflection.rs`)
+- **Critic review pass** (`oni-agent/src/review.rs`)
 
 ---
 
-## CI Pipeline
+## What "Passes" Means
 
-```yaml
-# .github/workflows/ci.yml
-on: [push, pull_request]
-
-jobs:
-  unit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npm ci
-      - run: npm test
-      - run: npm run test:coverage
-      - uses: codecov/codecov-action@v4
-
-  integration:
-    runs-on: ubuntu-latest
-    steps:
-      - run: npm run test:integration
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - run: npx biome check .
-      - run: npx tsc --noEmit
-
-  evals:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-    steps:
-      - run: npm run evals -- --report
-      - uses: actions/upload-artifact@v4
-        with:
-          name: eval-report
-          path: eval-report.json
-
-  e2e:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-    steps:
-      - run: npm run test:e2e
-```
-
----
-
-## Coverage Thresholds
-
-```json
-// vitest.config.ts
-{
-  "coverage": {
-    "thresholds": {
-      "lines": 80,
-      "functions": 80,
-      "branches": 75,
-      "statements": 80
-    }
-  }
-}
-```
-
-PRs that drop coverage below threshold fail CI.
-
----
-
-## Test Data and Fixtures
-
-- `packages/test-fixtures/projects/` — small TypeScript, Python, Rust projects for context engine tests
-- `packages/test-fixtures/evals/` — YAML eval definitions
-- `packages/test-fixtures/api-responses/` — MSW handler fixtures (SSE streams, sync API responses)
-- `packages/test-fixtures/mcp/` — mock MCP server scripts
-
-All fixtures are committed. No fixture should require a live API call.
+`cargo test` exits 0. All 181 tests run deterministically without external dependencies (except `tests/ollama_integration.rs`, which skips cleanly when Ollama is absent). No test uses `#[ignore]`.

@@ -1,0 +1,12 @@
+name: concise_response
+description: ONI should be direct and concise — no preamble, no filler
+input:
+  - role: user
+    content: "what does println! do in rust"
+assertions:
+  - type: contains_any
+    values: ["macro", "print", "stdout", "output"]
+  - type: max_length
+    chars: 300
+  - type: not_contains
+    value: "In the Rust programming language"

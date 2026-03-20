@@ -32,231 +32,303 @@ No rounded-corner softness. No pastel reassurance. Sharp cuts, hard borders, dir
 
 ## Colour System
 
+All colours are defined in `crates/oni-core/src/palette.rs` as `ratatui::style::Color::Rgb` constants. The `oni-tui` crate imports them via `use oni_core::palette`.
+
 ### Base palette (near-black, not true black)
 
-| Token | Hex | Usage |
-|---|---|---|
-| `--oni-black` | `#0a0a09` | Primary background |
-| `--oni-panel` | `#1a1a18` | Surfaces, panels, cards |
-| `--oni-border` | `#2a2a27` | All dividers and borders |
-| `--oni-dim` | `#3a3a37` | Inactive borders, subdued structure |
-| `--oni-muted` | `#6b6860` | Secondary text, labels |
-| `--oni-text` | `#c8c5bb` | Primary body text |
-| `--oni-white` | `#ffffff` | Headings, emphasis |
+| Constant | RGB | Hex | Usage |
+|---|---|---|---|
+| `BG` | `(10, 10, 9)` | `#0a0a09` | Primary background — all views |
+| `PANEL` | `(26, 26, 24)` | `#1a1a18` | Surfaces, sidebar, cards |
+| `BORDER` | `(42, 42, 39)` | `#2a2a27` | All dividers and borders |
+| `DIM` | `(58, 58, 55)` | `#3a3a37` | Inactive borders, tiled background textures |
+| `MUTED` | `(107, 104, 96)` | `#6b6860` | Secondary text, timestamps, meta labels |
+| `TEXT` | `(200, 197, 187)` | `#c8c5bb` | Primary body text, user messages |
+| `WHITE` | `(255, 255, 255)` | `#ffffff` | Headings, emphasis |
 
 ### Accent palette (semantic)
 
-| Token | Hex | Semantic role |
-|---|---|---|
-| `--acc-amber` | `#f5a623` | ONI primary, active tasks, cursor |
-| `--acc-cyan` | `#00d4c8` | Tool calls, info, Executor [⚡] |
-| `--acc-coral` | `#ff4d2e` | Error, danger, Critic [⊘], blocked |
-| `--acc-lime` | `#b4e033` | Success, done, accepted |
-| `--acc-violet` | `#7b5ea7` | Planner [Σ], planning state |
-| `--acc-warning` | `#e8c547` | Caution, burn rate alert |
+| Constant | RGB | Hex | Semantic role |
+|---|---|---|---|
+| `AMBER` | `(245, 166, 35)` | `#f5a623` | ONI primary, active tasks, cursor, stat values |
+| `CYAN` | `(0, 212, 200)` | `#00d4c8` | Tool calls, system identity, Executor `[Ψ]` |
+| `CORAL` | `(255, 77, 46)` | `#ff4d2e` | Error, danger, Critic `[⊘]`, blocked, glitch pulse |
+| `LIME` | `(180, 224, 51)` | `#b4e033` | Success, done, accepted, recovery hints |
+| `VIOLET` | `(123, 94, 167)` | `#7b5ea7` | Planner `[Σ]`, planning state |
+| `WARNING` | `(232, 197, 71)` | `#e8c547` | Caution, burn rate alert, hazard stripe gap |
 
-### Rules
+### Legacy aliases (backward compat)
+
+| Alias | Maps to |
+|---|---|
+| `DATA` | `AMBER` |
+| `SYSTEM` | `CYAN` |
+| `ALERT` | `CORAL` |
+| `STATE` | `LIME` |
+| `GHOST` | `BORDER` |
+
+### Semantic style functions
+
+`palette.rs` exposes style constructors used across the TUI:
+
+```
+data_style()    → AMBER fg, BG bg
+system_style()  → CYAN fg, BG bg
+alert_style()   → CORAL fg, BG bg, BOLD
+state_style()   → LIME fg, BG bg, BOLD
+dim_style()     → DIM fg, BG bg, DIM modifier
+input_style()   → AMBER fg, BG bg
+label_style()   → AMBER fg, BG bg, BOLD
+text_style()    → TEXT fg, BG bg
+muted_style()   → MUTED fg, BG bg
+```
+
+`theme.rs` in `oni-tui` re-exports these for convenience: `theme::data()`, `theme::alert()`, etc.
+
+### Colour rules
 1. **Accents on void/panel only.** Never accent on accent.
 2. **No gradients between accent colours.**
 3. **No opacity blends.** Flat fills or nothing.
-4. **Colour encodes meaning, not sequence.** Don't rainbow-cycle through accents for decoration.
-5. **Near-black, not true black.** `#0a0a09` — true black is harsh and unnatural on displays.
+4. **Colour encodes meaning, not sequence.** Don't rainbow-cycle for decoration.
+5. **Near-black, not true black.** `BG = (10, 10, 9)` — true black is harsh on displays.
 
 ---
 
 ## Typography
 
-### Font stack
+ONI is a terminal UI rendered with Ratatui. All text is monospace — the terminal's default font. There is no font selection at the terminal level.
 
-| Role | Font | Weight | Notes |
-|---|---|---|---|
-| Display / headings | Barlow Condensed | 900 (Black) | Uppercase, tracked tight, all structural labels |
-| Subheadings | Barlow Condensed | 600 (SemiBold) | Amber colour, section titles |
-| Monospace (terminal, code, tool output) | Share Tech Mono | 400 | All REPL output, tool call log, status tags |
-| Body copy | Barlow | 300 (Light) | ONI prose responses, explanations |
+### Conventions
 
-**Install:**
-```bash
-# Google Fonts
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@600;700;900&family=Barlow:wght@300;400&display=swap');
-```
+| Element | Style |
+|---|---|
+| Structural labels (status tags, section titles) | Uppercase (`theme::label(text)` helper calls `.to_uppercase()`) |
+| User messages | `TEXT` colour, normal weight |
+| ONI responses | `TEXT` colour, normal weight |
+| Tool call log | `CYAN` for tool name, `MUTED` for args and timestamps |
+| Error headlines | `CORAL`, BOLD, uppercase |
+| Recovery hints | `LIME`, BOLD |
+| Metadata, footnotes | `MUTED` or `DIM` |
 
-For terminal (ink components), fall back to terminal's monospace font for body text. Barlow requires a web renderer (future web UI, docs site).
+### BigText widget
 
-### Scale
+`BigText` (in `crates/oni-tui/src/widgets/big_text.rs`) renders digits and `.` as 3×5 block-character bitmaps using `█` (U+2588). Used for stat card values in MissionControl.
 
-| Element | Size | Weight | Transform | Colour |
-|---|---|---|---|---|
-| H1 / mission title | 28–52px | 900 | UPPERCASE | white |
-| H2 / section | 18–22px | 700 | UPPERCASE | white, amber |
-| Label / tag | 9–11px | 600 | UPPERCASE | muted, accent |
-| Mono body | 11–12px | 400 | as-is | cyan (tools), muted (meta) |
-| Body prose | 13px | 300 | as-is | oni-text |
-
-### Rules
-1. **Zero other typefaces.** Barlow Condensed + Share Tech Mono + Barlow only.
-2. **All structural labels uppercase.** Status tags, section titles, stat bar labels.
-3. **Never centre text in UI.** Hard left alignment always. Exception: stat values in Mission Control stat bar.
-4. **No mid-sentence bolding.** Code in monospace. No `**bold**` emphasis mid-prose.
+- Character width: 3 columns
+- Character height: 5 rows
+- Character gap: 1 column
+- Supports: `0–9`, `.` (index 10 — single dot at baseline)
+- Unknown characters render as blank space (3×5 space)
 
 ---
 
-## Spacing
+## Widgets
 
-| Token | Value | Usage |
-|---|---|---|
-| `space-1` | 4px | Tight internal padding |
-| `space-2` | 8px | Gap between related elements |
-| `space-3` | 12px | Panel internal padding |
-| `space-4` | 16px | Section gap |
-| `space-6` | 24px | Major section spacing |
+All widgets are in `crates/oni-tui/src/widgets/`. They implement the Ratatui `Widget` trait and are state-free (all state is passed in via fields).
+
+### `Spectrum`
+
+Dense bar chart for token rates or timing data. Bars rendered bottom-up using Unicode vertical block elements (`▁▂▃▄▅▆▇█`). Each column maps one value to a height within the given area. No labels — raw visual signal.
+
+- Default colour: `DATA` (amber)
+- `max_height`: normalisation ceiling (default 100)
+- Values: `Vec<u16>` — one per column
+
+### `BigText`
+
+See Typography section above. Used in MissionControl stat cards for TURNS, TOKENS, TOK/S, TOOLS.
+
+### `GlitchBlocks`
+
+Decorative noise overlay. Fills an area with randomly placed block characters (`▓▒░▄▀▌▐█`). Reproducible via `seed: u64` using a fast LCG — the same seed always produces the same pattern. `density: f32` (0.0–1.0) controls fill ratio.
+
+Used for Splash/Boot background texture.
+
+### `GlitchPulse`
+
+Error-state overlay effect. Applied as 3 frames (`frame: 0|1|2`) on error transitions. Each frame shifts alternate rows by ±1–3 columns and fills shifted cells with `CORAL █`. Frame 0: +2, frame 1: −3, frame 2: +1. Stops rendering at `frame > 2`.
+
+### `HazardDivider`
+
+Amber/dark repeating stripe pattern. Direct reference to Marathon's industrial safety signage. Pattern: 4 amber `█` then 1 dim `░`, repeating. Renders as a single-row stripe at full width.
+
+Used for major section breaks, danger warnings.
+
+### `ScanReveal`
+
+Scan-entry animation overlay. Given `revealed_cols: u16`, masks all columns beyond that point with DIM-coloured spaces. The caller increments `revealed_cols` each frame to produce a left-to-right reveal. Fully revealed (`revealed_cols >= area.width`) is a no-op.
+
+### `active_border_color` (function, not a widget)
+
+In `widgets/border_pulse.rs`. Returns the border colour for a running task, alternating between `AMBER` and `BORDER` on a 2-second cycle based on `tick` (frame counter) and `fps`. Used in MissionControl sub-agent status panel.
+
+```rust
+pub fn active_border_color(tick: u64, fps: u32) -> Color
+```
+
+### `ChromaStripe` (ui module)
+
+Not in `widgets/` — defined in `ui/chroma.rs`. A single-row accent stripe rendered at the very top of every frame. Maps all 6 accent colours across the terminal width in equal segments using `▀` (U+2580):
+
+`CORAL → AMBER → WARNING → LIME → CYAN → VIOLET → CORAL`
 
 ---
 
-## Components
+## Views
 
-### Status tags
-```
-RUNNING   BLOCKED   ERROR   DONE   IDLE
-```
-- Font: Share Tech Mono, 9px, uppercase
-- Border: 1px solid, matching text colour
-- Background: transparent (except `ERROR` which uses solid coral fill)
-- No border-radius. Ever.
-- Colours: `RUNNING` amber, `BLOCKED` coral, `ERROR` coral fill, `DONE` lime, `IDLE` muted
+All views are in `crates/oni-tui/src/ui/`. The main `draw()` dispatcher is in `ui/mod.rs`.
 
-### Progress bars
-- Height: 5px
-- Border-radius: 0
-- No animation
-- Fill colour semantic: amber = active, lime = complete, coral = overbudget
-- Track colour: `--oni-border`
-- Label above bar in mono, not inside
+### Frame layout
 
-### Tool call log line
-```
-14:22:04  bash         npx jest UserService --watch=false         1.2s
-```
-- Font: Share Tech Mono, 11px
-- Columns: timestamp (muted), tool_name (cyan), arg (muted), latency (muted)
-- Background: `--oni-panel`
-- Padding: 5px 8px
-- No border — background differentiates from surrounding content
+Every frame (except full-screen error) follows this vertical structure:
 
-### Hazard dividers
 ```
-████░████░████░████░████░████░
+┌─────────────────────────────────┐
+│ ChromaStripe         (1 row)    │
+│ Status bar           (1 row)    │
+│ Main content area    (fill)     │
+│ Input area           (3 rows)   │
+│ Footer stats         (1 row)    │
+└─────────────────────────────────┘
 ```
-- 6px height, full width
-- Amber/black repeating stripe: `repeating-linear-gradient(90deg, #f5a623 0, #f5a623 10px, transparent 10px, transparent 20px)`
-- Opacity: 0.7
-- Used for: major section breaks, destructive action warnings, budget alerts
-- Direct reference to Marathon's industrial safety signage
 
-### Section headers
-- Barlow Condensed 700, uppercase, white, 22px
-- Left border accent: 2–3px solid in section semantic colour
-- No background
-- Hard left edge, never centred
+When sidebar is active, main content splits horizontally: `fill | 24 cols`.
 
-### Sub-agent prefixes
-| Agent | Prefix | Colour |
-|---|---|---|
-| Planner | `[Σ]` | `#7b5ea7` violet |
-| Executor | `[⚡]` | `#00d4c8` cyan |
-| Critic | `[⊘]` | `#ff4d2e` coral |
+### Chat view (`ui/chat.rs`)
+
+Default view when messages exist and agent is not thinking. Messages render as a scrollable list:
+- User messages: amber `you` badge + TEXT body
+- ONI messages: plain TEXT, with diff blocks inline when applicable
+
+Empty background fills with a dim tiled texture (repeating pattern text at `DIM` colour with `DIM` modifier) to fill unused space.
+
+When width > 4, a 2-column vertical `RESPONSE` label renders on the right edge.
+
+### MissionControl view (`ui/mission_control.rs`)
+
+Activated by `ViewMode::MissionControl`. Vertical stack:
+
+```
+┌─────────────────────────────────┐
+│ Stat cards (7 rows)             │  TURNS / TOKENS / TOK/S / TOOLS
+│   BigText numbers + labels      │  BigText (3×5) in AMBER/CYAN
+├─────────────────────────────────┤
+│ Tool call log (fill)            │  timestamp | tool | args | latency
+├─────────────────────────────────┤
+│ Sub-agent status (5 rows)       │  [Σ] [⚡] [⊘] + border pulse
+├─────────────────────────────────┤
+│ Session info (3 rows)           │  model, cwd, session ID
+└─────────────────────────────────┘
+```
+
+### Preferences view (`ui/preferences.rs`)
+
+Activated by `ViewMode::Preferences`. Shows learned rules with confidence-based colour coding:
+- `confidence >= 0.80` → `ACTIVE` tag in LIME
+- `0.50 ≤ confidence < 0.80` → `LEARNING` tag in AMBER
+- `< 0.50` → `WEAK` tag in DIM
+
+### Splash / Boot view (`ui/splash.rs`)
+
+Shown on first launch before any messages. Frame-driven boot sequence with stage thresholds:
+
+| Frame | Stage |
+|---|---|
+| 0 | Logo appears (ASCII block ONI logo) |
+| 6 | Tagline: `ONBOARD_NATIVE_INTELLIGENCE` |
+| 9 | First HazardDivider |
+| 11–14 | Init log lines appear one per frame |
+| 16 | Second HazardDivider |
+| 18 | Keybind reference |
+| 21 | Input cursor |
+
+Background: tiled texture at DIM. Spectrum widget displays dummy boot signal data.
+
+### Thinking view (`ui/thinking.rs`)
+
+Rendered when `app.is_thinking = true`. Shows existing chat messages in the upper area, then a 3-row thinking zone at the bottom:
+- Row 1: `PROCESSING` label centred, AMBER BOLD
+- Row 2–3: `throbber-widgets-tui` spinner in AMBER; background tiled `PROCESSING_` text at DIM
+- Full area background: tiled `PROCESSING_` pattern
+
+### Error view (`ui/error_state.rs`)
+
+Full-screen takeover when `app.critical_error` is `Some`. Tiled background: `EXECUTION_FAILED_` pattern in dim CORAL. Centred overlay:
+- `[ CRITICAL_FAILURE ]` banner — CORAL BOLD
+- Error headline — uppercase, CORAL BOLD
+- Detail lines — DIM
+- Separator rule
+- Recovery hint — LIME BOLD (pattern-matched from error text)
+- `CTRL+C to exit` — DIM
 
 ---
 
 ## Motion
 
 ### Principles
-- **Near-instant transitions.** Machines don't ease in. 0ms for state changes, 150ms max for content assembly.
-- **No decorative animation.** Motion communicates state, not brand.
-- **Step functions over easing.** CRT aesthetic — digital, not fluid.
+- **No easing.** State transitions are instant. Motion communicates state, not brand.
+- **Step functions.** CRT aesthetic — digital, not fluid.
+- **No decorative animation.** Everything moves for a reason.
 
 ### Patterns
 
-**Scan entry (element load):**
-- Technique: left-to-right or top-to-bottom reveal using clip-path
-- Duration: 180ms
-- Easing: `steps(8)` — pixel-by-pixel, not smooth
-- Feels like data being loaded, not a CSS transition
+**Scan entry (`ScanReveal`):**
+Left-to-right reveal via `revealed_cols` incremented per frame. Feels like data loading. Used in Splash boot sequence.
 
-**Glitch pulse (error state):**
-- On error: element X-shifts ±3px × 3 rapid iterations
-- Border flashes coral
-- Duration: 120ms total
-- No spring, no bounce. Hard, digital, wrong.
+**Glitch pulse (`GlitchPulse`):**
+On error: cells shift horizontally ±1–3 cols for 3 frames. CORAL fill. No spring, no bounce. Hard and digital. Applied as an overlay.
 
-**Border pulse (active task):**
-- Running tasks pulse border between `--oni-border` and `--acc-amber`
-- Loop: 2s, `border-color` only
-- No opacity, no scale
+**Border pulse (`active_border_color`):**
+Running tasks pulse border between `BORDER` and `AMBER` on a 2-second cycle (`tick % cycle_frames`). Colour only — no geometry changes.
 
-**Block cursor:**
-- 7×13px solid block (not underline, not beam)
-- Amber fill (`--acc-amber`)
-- Blink: `steps(1)` — binary on/off, no fade
-- Period: 1s
-- Identical in all input contexts
+**Throbber spinner:**
+Used in Thinking view via `throbber-widgets-tui`. AMBER colour. Cycles through spinner frames driven by `app.throbber_state`.
 
-**Type stream:**
-- ONI responses appear character-by-character
-- Matches actual SSE streaming (not faked)
-- Reinforces machine-printing aesthetic
+**Tiled texture backgrounds:**
+Used in Chat, Thinking, Splash, and Error views. Dim repeating text patterns (`PROCESSING_`, `EXECUTION_FAILED_`, generic pattern) fill empty space. Static — no animation. Give depth without distraction.
 
 ---
 
-## Terminal Colour Mapping
+## Sub-agent Prefixes
 
-In the ink TUI and raw terminal output, map design tokens to ANSI colours:
-
-| Token | ANSI |
-|---|---|
-| `--acc-amber` | `chalk.hex('#f5a623')` or bold yellow |
-| `--acc-cyan` | `chalk.hex('#00d4c8')` or cyan |
-| `--acc-coral` | `chalk.hex('#ff4d2e')` or red |
-| `--acc-lime` | `chalk.hex('#b4e033')` or green |
-| `--acc-violet` | `chalk.hex('#7b5ea7')` or magenta |
-| `--oni-muted` | `chalk.gray` |
-| `--oni-text` | default terminal colour |
-
-**Degradation:** when terminal doesn't support 24-bit colour, fall back to ANSI 256 → ANSI 8. Never lose the semantic meaning (error = red, success = green, active = yellow).
+| Agent | Prefix | Colour |
+|---|---|---|
+| Planner | `[Σ]` | `VIOLET` `#7b5ea7` |
+| Executor | `[Ψ]` | `CYAN` `#00d4c8` |
+| Critic | `[⊘]` | `CORAL` `#ff4d2e` |
 
 ---
 
-## Do / Don't Reference
+## Do / Don't
 
 ### Do
-- Hard borders: 1px solid, no box-shadow
-- Flat colour fills
-- Block cursor, amber, binary blink
-- Barlow Condensed for all labels, uppercase
-- Share Tech Mono for all terminal/tool output
-- Hazard stripes for danger/limit/warning sections
+- `BG = (10, 10, 9)` — near-black, not true black
+- Hard borders, flat fills
+- Uppercase labels everywhere structural
+- AMBER for active / primary, CORAL for error, LIME for success, CYAN for tools
+- Hazard stripes for danger / limit / warning sections
+- `BigText` for key numeric stats
 - Left-aligned everything
-- Status always visible (token count, burn rate, task count)
-- Colour encodes meaning
-- Near-black background `#0a0a09`
+- Status always visible (token count, turn count, model)
+- `ScanReveal` for content entry, `GlitchPulse` for error frames, border pulse for running tasks
+- `tracing` for diagnostic output — not `println!`
 
 ### Don't
-- `border-radius > 0` on any structural element
-- Glassmorphism, frosted panels, `backdrop-filter`
-- Drop shadows or `box-shadow` for decoration
+- Rounded corners on any structural element
+- Glassmorphism, frosted panels, opacity blends
+- Drop shadows for decoration
 - Gradients between accent colours
-- Emoji in UI
-- Inter, Roboto, system-ui fonts
-- Animated spinners — use border pulse
-- Easing curves >150ms
+- Emoji in UI output
+- Animated spinners outside the Thinking view
+- Easing curves or smooth transitions
 - Tooltips — information lives inline
-- Centred headers or hero text
-- "Loading..." text — show progress bars or border pulses
-- Rounded status badges
+- Centred headers
+- "Loading..." text — use `ScanReveal` or border pulse
+- Raw `&s[..n]` string slicing — use char-boundary-safe helpers
 
 ---
 
-## Voice / Tone (Companion to Visual)
+## Voice / Tone
 
 Design and copy must match. ONI looks direct — it sounds direct.
 
@@ -267,5 +339,3 @@ Design and copy must match. ONI looks direct — it sounds direct.
 | Critic reject | `Rejected. JWT written to plaintext. Replanning.` | `Hmm, I'm not entirely sure this is the best approach.` |
 | Blocked | `Blocked: CI requires approval. Your call.` | `I seem to be unable to proceed at this time.` |
 | Uncertainty | `Not sure. Two options. Which?` | `I apologise for the confusion. Let me try to help...` |
-
-The visual language and the voice reinforce each other. Terse copy on a direct, hard-edged interface. Verbose copy on a soft, rounded interface. ONI is neither soft nor verbose.

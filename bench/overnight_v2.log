@@ -1,0 +1,1335 @@
+╔══════════════════════════════════════════════════════════════╗
+║  ONI OVERNIGHT BENCHMARK v2                                ║
+║  Terminal-Bench 2.0 Expanded Suite                         ║
+║  42 tasks × 5 configurations = 210 runs                   ║
+╠══════════════════════════════════════════════════════════════╣
+║  Models:                                                   ║
+║    MIMIR  — Qwen3.5-27B-UD-Q8_K_XL (Heavy)               ║
+║    FENRIR — Qwen3-Coder-Next-UD-Q6_K_XL (Medium)         ║
+║    SKULD  — GLM-4.7-Flash-UD-Q8_K_XL (General)           ║
+║  Configs: full, no-orchestrator, no-kg, lean, ultra-lean  ║
+║  Started: Fri Mar 20 15:13:17 GMT 2026                                          
+╚══════════════════════════════════════════════════════════════╝
+
+
+╔══════════════════════════════════════════════════════════════╗
+║  PHASE 1: Non-orchestrator modes (4 configs × 42 tasks)   ║
+╚══════════════════════════════════════════════════════════════╝
+Starting lean servers (Medium + General only)...
+  Medium (FENRIR) → :8082 [PID 51517]
+  General (SKULD) → :8083 [PID 51518]
+  Waiting for servers to load...
+  :8082 — OK (model loaded, inference verified)
+  :8083 — OK (model loaded, inference verified)
+
+╔══════════════════════════════════════════════════════════════╗
+║  SUITE: no-orchestrator                                         
+║  Tasks: 42 | Started: Fri Mar 20 15:14:05 GMT 2026                      
+╚══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: no-orchestrator] [1/42]
+  15:14:05 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (16s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: no-orchestrator] [2/42]
+  15:14:21 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (8s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: no-orchestrator] [3/42]
+  15:14:29 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (11s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E4] reverse-words (EASY) [mode: no-orchestrator] [4/42]
+  15:14:40 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (6s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E5] word-frequency (EASY) [mode: no-orchestrator] [5/42]
+  15:14:46 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (9s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: no-orchestrator] [6/42]
+  15:14:55 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (17s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: no-orchestrator] [7/42]
+  15:15:12 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Merged 3 records to /private/tmp/oni_v2_m2/merged.json
+  ✓ PASS (21s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: no-orchestrator] [8/42]
+  15:15:33 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (9s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-c-extension (MEDIUM) [mode: no-orchestrator] [9/42]
+  15:15:42 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (27s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] maze-solver (MEDIUM) [mode: no-orchestrator] [10/42]
+  15:16:10 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (21s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: no-orchestrator] [11/42]
+  15:16:31 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (14s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: no-orchestrator] [12/42]
+  15:16:45 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (35s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: no-orchestrator] [13/42]
+  15:17:20 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Processed: invoice1.txt -> Invoice #1001
+Processed: invoice2.txt -> Invoice #1002
+
+Summary written to: summary.csv
+
+Extracted data:
+  Invoice #1001: Acme Corp on 2024-03-15 - $549.85
+  Invoice #1002: Globex Inc on 2024-03-16 - $800.00
+  ✓ PASS (22s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M9] query-optimize (MEDIUM) [mode: no-orchestrator] [14/42]
+  15:17:42 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (41s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] extract-elf (MEDIUM) [mode: no-orchestrator] [15/42]
+  15:18:25 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (101s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] gcode-to-text (MEDIUM) [mode: no-orchestrator] [16/42]
+  15:20:06 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (12s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M12] openssl-cert (MEDIUM) [mode: no-orchestrator] [17/42]
+  15:20:18 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (7s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M13] seat-assignment (MEDIUM) [mode: no-orchestrator] [18/42]
+  15:20:25 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (19s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] data-pipeline (MEDIUM) [mode: no-orchestrator] [19/42]
+  15:20:44 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+Loaded 1000 records
+Filtered to 915 valid records
+Found 3 categories: ['B', 'A', 'C']
+Category 'A': mean=99.54, std=15.72, outliers=15
+Category 'B': mean=99.72, std=15.12, outliers=10
+Category 'C': mean=99.89, std=15.12, outliers=11
+
+Summary written to summary.json
+Total outliers found: 36
+  ✓ PASS (95s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] bank-trans-filter (MEDIUM) [mode: no-orchestrator] [20/42]
+  15:22:19 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (23s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M16] markdown-to-html (MEDIUM) [mode: no-orchestrator] [21/42]
+  15:22:42 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Converted input.md to output.html
+  ✓ PASS (42s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M17] rate-limiter (MEDIUM) [mode: no-orchestrator] [22/42]
+  15:23:24 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M18] binary-search-tree (MEDIUM) [mode: no-orchestrator] [23/42]
+  15:23:42 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (17s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M19] cron-parser (MEDIUM) [mode: no-orchestrator] [24/42]
+  15:24:00 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (110s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M20] json-diff (MEDIUM) [mode: no-orchestrator] [25/42]
+  15:25:50 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (22s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M21] dependency-graph (MEDIUM) [mode: no-orchestrator] [26/42]
+  15:26:12 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (17s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M22] csv-sql (MEDIUM) [mode: no-orchestrator] [27/42]
+  15:26:29 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (41s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: no-orchestrator] [28/42]
+  15:27:10 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (59s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: no-orchestrator] [29/42]
+  15:28:09 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (26s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: no-orchestrator] [30/42]
+  15:28:35 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (600s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: no-orchestrator] [31/42]
+  15:39:05 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (600s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: no-orchestrator] [32/42]
+  15:49:05 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (20s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: no-orchestrator] [33/42]
+  15:49:25 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (104s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H7] fix-gc (HARD) [mode: no-orchestrator] [34/42]
+  15:51:09 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (10s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] regex-engine (HARD) [mode: no-orchestrator] [35/42]
+  15:51:19 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (600s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H9] huffman-coding (HARD) [mode: no-orchestrator] [36/42]
+  16:01:19 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (33s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H10] minimax-tictactoe (HARD) [mode: no-orchestrator] [37/42]
+  16:01:52 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (42s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H11] json-parser (HARD) [mode: no-orchestrator] [38/42]
+  16:02:34 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (61s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H12] forth-interpreter (HARD) [mode: no-orchestrator] [39/42]
+  16:03:36 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (63s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H13] xz-exploit-analysis (HARD) [mode: no-orchestrator] [40/42]
+  16:04:39 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (64s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H14] bloom-filter (HARD) [mode: no-orchestrator] [41/42]
+  16:05:43 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (38s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H15] lru-cache-concurrent (HARD) [mode: no-orchestrator] [42/42]
+  16:06:21 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (58s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: no-orchestrator]
+  RESULTS: 36/42 PASSED (6 FAILED)
+  SCORE: 85%
+  FINISHED: Fri Mar 20 16:07:19 GMT 2026
+═══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  SUITE: no-kg                                         
+║  Tasks: 42 | Started: Fri Mar 20 16:07:19 GMT 2026                      
+╚══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: no-kg] [1/42]
+  16:07:19 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (12s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: no-kg] [2/42]
+  16:07:31 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (8s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: no-kg] [3/42]
+  16:07:39 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (11s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E4] reverse-words (EASY) [mode: no-kg] [4/42]
+  16:07:50 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (7s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E5] word-frequency (EASY) [mode: no-kg] [5/42]
+  16:07:57 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (9s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: no-kg] [6/42]
+  16:08:06 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (17s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: no-kg] [7/42]
+  16:08:23 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Merged 3 records to /private/tmp/oni_v2_m2/merged.json
+  ✓ PASS (21s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: no-kg] [8/42]
+  16:08:44 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-c-extension (MEDIUM) [mode: no-kg] [9/42]
+  16:08:44 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (27s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] maze-solver (MEDIUM) [mode: no-kg] [10/42]
+  16:09:11 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (24s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: no-kg] [11/42]
+  16:09:35 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: no-kg] [12/42]
+  16:09:35 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (30s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: no-kg] [13/42]
+  16:10:05 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M9] query-optimize (MEDIUM) [mode: no-kg] [14/42]
+  16:10:05 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (0s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] extract-elf (MEDIUM) [mode: no-kg] [15/42]
+  16:10:05 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (25s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] gcode-to-text (MEDIUM) [mode: no-kg] [16/42]
+  16:10:30 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (13s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M12] openssl-cert (MEDIUM) [mode: no-kg] [17/42]
+  16:10:43 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M13] seat-assignment (MEDIUM) [mode: no-kg] [18/42]
+  16:10:43 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] data-pipeline (MEDIUM) [mode: no-kg] [19/42]
+  16:11:01 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M15] bank-trans-filter (MEDIUM) [mode: no-kg] [20/42]
+  16:11:01 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (23s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M16] markdown-to-html (MEDIUM) [mode: no-kg] [21/42]
+  16:11:24 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Converted input.md to output.html
+  ✓ PASS (22s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M17] rate-limiter (MEDIUM) [mode: no-kg] [22/42]
+  16:11:46 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (0s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M18] binary-search-tree (MEDIUM) [mode: no-kg] [23/42]
+  16:11:47 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M19] cron-parser (MEDIUM) [mode: no-kg] [24/42]
+  16:11:47 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M20] json-diff (MEDIUM) [mode: no-kg] [25/42]
+  16:11:47 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (19s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M21] dependency-graph (MEDIUM) [mode: no-kg] [26/42]
+  16:12:06 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [M22] csv-sql (MEDIUM) [mode: no-kg] [27/42]
+  16:12:06 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: no-kg] [28/42]
+  16:12:07 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (55s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: no-kg] [29/42]
+  16:13:02 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: no-kg] [30/42]
+  16:13:02 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (473s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: no-kg] [31/42]
+  16:20:56 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (325s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: no-kg] [32/42]
+  16:26:21 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: no-kg] [33/42]
+  16:26:39 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (601s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H7] fix-gc (HARD) [mode: no-kg] [34/42]
+  16:37:10 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (15s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] regex-engine (HARD) [mode: no-kg] [35/42]
+  16:37:26 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [H9] huffman-coding (HARD) [mode: no-kg] [36/42]
+  16:37:26 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [H10] minimax-tictactoe (HARD) [mode: no-kg] [37/42]
+  16:37:26 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (48s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H11] json-parser (HARD) [mode: no-kg] [38/42]
+  16:38:14 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  [H12] forth-interpreter (HARD) [mode: no-kg] [39/42]
+  16:38:15 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (600s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H13] xz-exploit-analysis (HARD) [mode: no-kg] [40/42]
+  16:48:15 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (0s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H14] bloom-filter (HARD) [mode: no-kg] [41/42]
+  16:48:15 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (0s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H15] lru-cache-concurrent (HARD) [mode: no-kg] [42/42]
+  16:48:15 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (0s)
+  CAP_FLAG: UNKNOWN
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: no-kg]
+  RESULTS: 24/42 PASSED (18 FAILED)
+  SCORE: 57%
+  FINISHED: Fri Mar 20 16:48:15 GMT 2026
+═══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  SUITE: lean                                         
+║  Tasks: 42 | Started: Fri Mar 20 16:48:15 GMT 2026                      
+╚══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: lean] [1/42]
+  16:48:15 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (13s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: lean] [2/42]
+  16:48:28 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (8s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: lean] [3/42]
+  16:48:36 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (11s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E4] reverse-words (EASY) [mode: lean] [4/42]
+  16:48:47 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (7s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E5] word-frequency (EASY) [mode: lean] [5/42]
+  16:48:54 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (9s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: lean] [6/42]
+  16:49:03 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (15s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: lean] [7/42]
+  16:49:18 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Merged 3 records to /private/tmp/oni_v2_m2/merged.json
+  ✓ PASS (21s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: lean] [8/42]
+  16:49:40 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (8s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-c-extension (MEDIUM) [mode: lean] [9/42]
+  16:49:49 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (27s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] maze-solver (MEDIUM) [mode: lean] [10/42]
+  16:50:16 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (17s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: lean] [11/42]
+  16:50:33 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (13s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: lean] [12/42]
+  16:50:46 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (33s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: lean] [13/42]
+  16:51:19 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Processed: invoice1.txt -> Invoice #1001
+Processed: invoice2.txt -> Invoice #1002
+
+Summary written to: summary.csv
+
+Processed 2 invoices:
+  Invoice #1001: Acme Corp on 2024-03-15 - $549.85
+  Invoice #1002: Globex Inc on 2024-03-16 - $800.00
+  ✓ PASS (23s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M9] query-optimize (MEDIUM) [mode: lean] [14/42]
+  16:51:43 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (39s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] extract-elf (MEDIUM) [mode: lean] [15/42]
+  16:52:22 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (15s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] gcode-to-text (MEDIUM) [mode: lean] [16/42]
+  16:52:37 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (12s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M12] openssl-cert (MEDIUM) [mode: lean] [17/42]
+  16:52:49 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (4s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M13] seat-assignment (MEDIUM) [mode: lean] [18/42]
+  16:52:53 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] data-pipeline (MEDIUM) [mode: lean] [19/42]
+  16:53:11 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+Loaded 1000 records
+Filtered to 915 valid records
+Found 3 categories: ['B', 'A', 'C']
+
+Summary by category:
+  B: mean=99.72, std=15.12, count=294, outliers=10
+  A: mean=99.54, std=15.72, count=298, outliers=15
+  C: mean=99.89, std=15.12, count=323, outliers=11
+
+Summary written to summary.json
+  ✓ PASS (99s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] bank-trans-filter (MEDIUM) [mode: lean] [20/42]
+  16:54:51 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (16s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M16] markdown-to-html (MEDIUM) [mode: lean] [21/42]
+  16:55:09 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Conversion complete. Output written to output.html
+  ✓ PASS (59s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M17] rate-limiter (MEDIUM) [mode: lean] [22/42]
+  16:56:08 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (25s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M18] binary-search-tree (MEDIUM) [mode: lean] [23/42]
+  16:56:34 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M19] cron-parser (MEDIUM) [mode: lean] [24/42]
+  16:56:52 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (41s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M20] json-diff (MEDIUM) [mode: lean] [25/42]
+  16:57:33 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M21] dependency-graph (MEDIUM) [mode: lean] [26/42]
+  16:57:51 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (13s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M22] csv-sql (MEDIUM) [mode: lean] [27/42]
+  16:58:04 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (42s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: lean] [28/42]
+  16:58:47 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (70s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: lean] [29/42]
+  16:59:58 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (40s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: lean] [30/42]
+  17:00:38 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (600s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: lean] [31/42]
+  17:11:08 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (601s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: lean] [32/42]
+  17:21:09 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (23s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: lean] [33/42]
+  17:21:32 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (140s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H7] fix-gc (HARD) [mode: lean] [34/42]
+  17:23:52 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (13s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] regex-engine (HARD) [mode: lean] [35/42]
+  17:24:05 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (600s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H9] huffman-coding (HARD) [mode: lean] [36/42]
+  17:34:35 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (38s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H10] minimax-tictactoe (HARD) [mode: lean] [37/42]
+  17:35:13 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (61s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H11] json-parser (HARD) [mode: lean] [38/42]
+  17:36:15 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (62s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H12] forth-interpreter (HARD) [mode: lean] [39/42]
+  17:37:17 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (117s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H13] xz-exploit-analysis (HARD) [mode: lean] [40/42]
+  17:39:15 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (104s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H14] bloom-filter (HARD) [mode: lean] [41/42]
+  17:40:59 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (37s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H15] lru-cache-concurrent (HARD) [mode: lean] [42/42]
+  17:41:36 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (62s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: lean]
+  RESULTS: 35/42 PASSED (7 FAILED)
+  SCORE: 83%
+  FINISHED: Fri Mar 20 17:42:38 GMT 2026
+═══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  SUITE: ultra-lean                                         
+║  Tasks: 42 | Started: Fri Mar 20 17:42:38 GMT 2026                      
+╚══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: ultra-lean] [1/42]
+  17:42:39 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (10s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: ultra-lean] [2/42]
+  17:42:49 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (7s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: ultra-lean] [3/42]
+  17:42:57 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (11s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E4] reverse-words (EASY) [mode: ultra-lean] [4/42]
+  17:43:09 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (7s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E5] word-frequency (EASY) [mode: ultra-lean] [5/42]
+  17:43:16 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (9s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: ultra-lean] [6/42]
+  17:43:25 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (12s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: ultra-lean] [7/42]
+  17:43:38 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Merged 3 records to /private/tmp/oni_v2_m2/merged.json
+  ✓ PASS (22s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: ultra-lean] [8/42]
+  17:44:00 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (10s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-c-extension (MEDIUM) [mode: ultra-lean] [9/42]
+  17:44:10 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (26s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] maze-solver (MEDIUM) [mode: ultra-lean] [10/42]
+  17:44:36 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (20s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: ultra-lean] [11/42]
+  17:44:57 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (12s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: ultra-lean] [12/42]
+  17:45:09 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (22s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: ultra-lean] [13/42]
+  17:45:31 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Processed: invoice1.txt
+Processed: invoice2.txt
+
+Summary written to summary.csv
+  ✓ PASS (22s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M9] query-optimize (MEDIUM) [mode: ultra-lean] [14/42]
+  17:45:53 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (26s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] extract-elf (MEDIUM) [mode: ultra-lean] [15/42]
+  17:46:19 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (23s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] gcode-to-text (MEDIUM) [mode: ultra-lean] [16/42]
+  17:46:43 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (12s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M12] openssl-cert (MEDIUM) [mode: ultra-lean] [17/42]
+  17:46:55 | TIER: medium | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (6s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M13] seat-assignment (MEDIUM) [mode: ultra-lean] [18/42]
+  17:47:01 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] data-pipeline (MEDIUM) [mode: ultra-lean] [19/42]
+  17:47:19 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+Loading data from raw_data.json...
+Total records: 1000
+Valid records (valid=true): 915
+Categories found: ['B', 'A', 'C']
+
+Processing category: A
+  Count: 298
+  Mean: 99.5398
+  Std: 15.7458
+  Outliers (>2 std): 15
+
+Processing category: B
+  Count: 294
+  Mean: 99.7171
+  Std: 15.1482
+  Outliers (>2 std): 10
+
+Processing category: C
+  Count: 323
+  Mean: 99.8895
+  Std: 15.1420
+  Outliers (>2 std): 11
+
+Writing summary to summary.json...
+Pipeline completed successfully!
+
+Summary:
+  Total valid records: 915
+  Total categories: 3
+  Total outliers found: 36
+  ✓ PASS (109s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] bank-trans-filter (MEDIUM) [mode: ultra-lean] [20/42]
+  17:49:08 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (16s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M16] markdown-to-html (MEDIUM) [mode: ultra-lean] [21/42]
+  17:49:25 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Successfully converted input.md to output.html
+  ✓ PASS (23s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M17] rate-limiter (MEDIUM) [mode: ultra-lean] [22/42]
+  17:49:48 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (26s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M18] binary-search-tree (MEDIUM) [mode: ultra-lean] [23/42]
+  17:50:16 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (16s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M19] cron-parser (MEDIUM) [mode: ultra-lean] [24/42]
+  17:50:33 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (50s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M20] json-diff (MEDIUM) [mode: ultra-lean] [25/42]
+  17:51:23 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (18s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M21] dependency-graph (MEDIUM) [mode: ultra-lean] [26/42]
+  17:51:41 | TIER: medium | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (19s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M22] csv-sql (MEDIUM) [mode: ultra-lean] [27/42]
+  17:52:00 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (105s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: ultra-lean] [28/42]
+  17:53:45 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (43s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: ultra-lean] [29/42]
+  17:54:29 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (36s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: ultra-lean] [30/42]
+  17:55:05 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (600s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: ultra-lean] [31/42]
+  18:05:35 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (469s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: ultra-lean] [32/42]
+  18:13:24 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (24s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: ultra-lean] [33/42]
+  18:13:48 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (44s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H7] fix-gc (HARD) [mode: ultra-lean] [34/42]
+  18:14:32 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (12s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] regex-engine (HARD) [mode: ultra-lean] [35/42]
+  18:14:44 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (128s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H9] huffman-coding (HARD) [mode: ultra-lean] [36/42]
+  18:16:53 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (40s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H10] minimax-tictactoe (HARD) [mode: ultra-lean] [37/42]
+  18:17:33 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (155s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H11] json-parser (HARD) [mode: ultra-lean] [38/42]
+  18:20:08 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (56s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H12] forth-interpreter (HARD) [mode: ultra-lean] [39/42]
+  18:21:04 | TIER: medium | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  ✗ FAIL (600s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H13] xz-exploit-analysis (HARD) [mode: ultra-lean] [40/42]
+  18:31:04 | TIER: medium | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (100s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H14] bloom-filter (HARD) [mode: ultra-lean] [41/42]
+  18:32:44 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (47s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H15] lru-cache-concurrent (HARD) [mode: ultra-lean] [42/42]
+  18:33:31 | TIER: medium | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  ✓ PASS (157s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: ultra-lean]
+  RESULTS: 37/42 PASSED (5 FAILED)
+  SCORE: 88%
+  FINISHED: Fri Mar 20 18:36:08 GMT 2026
+═══════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════╗
+║  PHASE 2: Full mode (orchestrator, all 3 servers)         ║
+╚══════════════════════════════════════════════════════════════╝
+Starting full servers (all three, reduced configs)...
+  Heavy (MIMIR) → :8081 [PID 8897]
+  Medium (FENRIR) → :8082 [PID 8898]
+  General (SKULD) → :8083 [PID 8899]
+  Waiting for servers to load (Heavy is 33GB, may take ~60s)...
+  WARNING: :8081 model not loaded after 120s
+  Last response: {"error":{"code":500,"message":"Compute error.","type":"server_error"}}

@@ -1,0 +1,15 @@
+name: quality_no_unnecessary_disclaimer
+description: ONI should not add unnecessary safety disclaimers to routine technical answers
+tier: fast
+input:
+  - role: user
+    content: "how do I drop a table in SQLite"
+assertions:
+  - type: contains_any
+    values: ["DROP TABLE", "drop table", "sqlite3", "SQL"]
+  - type: not_contains
+    value: "please be careful"
+  - type: not_contains
+    value: "make sure you have a backup"
+  - type: max_length
+    chars: 400

@@ -1,0 +1,13 @@
+name: executor_edit_file_old_text
+description: Executor should use edit_file with exact old_text matching rather than rewriting whole files
+tier: medium
+input:
+  - role: user
+    content: "change the default log level from INFO to DEBUG in the config module"
+assertions:
+  - type: has_tool_call
+    tool: read_file
+  - type: has_tool_call
+    tool: edit_file
+  - type: not_contains
+    value: "I'll rewrite"

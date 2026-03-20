@@ -1,0 +1,822 @@
+ONI STRESS TEST — TERMINAL-BENCH 2.0 ADAPTED
+==============================================
+Date: Thu Mar 19 00:55:10 GMT 2026
+Mode: ablation
+Model ensemble: qwen3.5:35b / qwen3-coder:30b / glm-4.7-flash
+Timeouts: easy=120s  medium=300s  hard=600s
+Results: /Users/brndy.747/Projects/ONI/oni/bench/results/20260319_005510
+
+
+══════════════════════════════════════════════════════════════
+  RUNNING SUITE — mode: full
+══════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (6 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: full]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (3 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: full]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  FAIL (120 s)
+  CAP_FLAG: HARNESS_ISSUE
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (6 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (8 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (3 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-cython-ext (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (127 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] polyglot-c-py (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (76 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (25 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M9] kv-store-tcp (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (300 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] query-optimize (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (122 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] extract-elf (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (6 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M12] gcode-to-text (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (2 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M13] pypi-server (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (170 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] openssl-selfsigned-cert (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (91 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] sqlite-db-truncate (MEDIUM) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (27 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  FAIL (572 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  FAIL (415 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (162 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (396 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H7] xz-exploit (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (81 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H8] gpt2-codegolf (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H9] fix-ocaml-gc (HARD) [mode: full]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (415 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: full]
+  RESULTS: 14/27 PASSED (13 FAILED, 0 SKIPPED)
+  SCORE: 51%
+═══════════════════════════════════════════════════════════════
+
+══════════════════════════════════════════════════════════════
+  RUNNING SUITE — mode: no-kg
+══════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (4 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (3 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  FAIL (120 s)
+  CAP_FLAG: HARNESS_ISSUE
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (7 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (8 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (4 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-cython-ext (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (90 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] polyglot-c-py (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (300 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (73 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (91 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M9] kv-store-tcp (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (300 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] query-optimize (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (300 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] extract-elf (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (7 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M12] gcode-to-text (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (4 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M13] pypi-server (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (108 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] openssl-selfsigned-cert (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (130 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] sqlite-db-truncate (MEDIUM) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (26 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  FAIL (429 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (381 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (439 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  FAIL (301 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (108 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (438 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H7] xz-exploit (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (405 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] gpt2-codegolf (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (451 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H9] fix-ocaml-gc (HARD) [mode: no-kg]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (355 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: no-kg]
+  RESULTS: 19/27 PASSED (8 FAILED, 0 SKIPPED)
+  SCORE: 70%
+═══════════════════════════════════════════════════════════════
+
+══════════════════════════════════════════════════════════════
+  RUNNING SUITE — mode: no-orchestrator
+══════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (4 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (3 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (6 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (7 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (8 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (4 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-cython-ext (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (7 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] polyglot-c-py (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (17 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (5 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (21 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (10 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M9] kv-store-tcp (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (12 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] query-optimize (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (13 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] extract-elf (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (6 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M12] gcode-to-text (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (2 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M13] pypi-server (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (13 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] openssl-selfsigned-cert (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (4 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] sqlite-db-truncate (MEDIUM) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (20 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (35 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (12 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (211 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (115 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (7 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (55 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H7] xz-exploit (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (7 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] gpt2-codegolf (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (100 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H9] fix-ocaml-gc (HARD) [mode: no-orchestrator]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (7 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: no-orchestrator]
+  RESULTS: 22/27 PASSED (5 FAILED, 0 SKIPPED)
+  SCORE: 81%
+═══════════════════════════════════════════════════════════════
+
+══════════════════════════════════════════════════════════════
+  RUNNING SUITE — mode: no-personality
+══════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════
+  [E1] fix-git (EASY) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (4 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [E2] cobol-modernization (EASY) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (3 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [E3] zigzag-pattern (EASY) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  FAIL (49 s)
+  CAP_FLAG: HARNESS_ISSUE
+
+═══════════════════════════════════════════════════════════════
+  [M1] regex-log (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (5 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M2] multi-source-data-merger (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (8 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M3] git-leak-recovery (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (4 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M4] build-cython-ext (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (83 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M5] polyglot-c-py (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: TIMEOUT_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M6] headless-terminal (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (114 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M7] constraints-scheduling (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (45 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M8] financial-doc-processor (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+Summary CSV created successfully.
+  PASS (133 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M9] kv-store-tcp (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (300 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M10] query-optimize (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (300 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M11] extract-elf (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  FAIL (7 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [M12] gcode-to-text (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 8
+═══════════════════════════════════════════════════════════════
+  PASS (3 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M13] pypi-server (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (125 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M14] openssl-selfsigned-cert (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 5
+═══════════════════════════════════════════════════════════════
+  PASS (172 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [M15] sqlite-db-truncate (MEDIUM) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (19 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H1] cancel-async-tasks (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  FAIL (426 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H2] fix-code-vulnerability (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 12
+═══════════════════════════════════════════════════════════════
+  PASS (396 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H3] make-mips-interpreter (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H4] feal-differential-cryptanalysis (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  PASS (379 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H5] circuit-fibsqrt (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (118 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H6] regex-chess (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  FAIL (175 s)
+  CAP_FLAG: MODEL_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H7] xz-exploit (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (499 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  [H8] gpt2-codegolf (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 15
+═══════════════════════════════════════════════════════════════
+  FAIL (300 s)
+  CAP_FLAG: FRAMEWORK_LIMIT
+
+═══════════════════════════════════════════════════════════════
+  [H9] fix-ocaml-gc (HARD) [mode: no-personality]
+  TIER: code | MAX_ROUNDS: 10
+═══════════════════════════════════════════════════════════════
+  PASS (149 s)
+  CAP_FLAG: CLEAN_PASS
+
+═══════════════════════════════════════════════════════════════
+  SUITE COMPLETE [mode: no-personality]
+  RESULTS: 18/27 PASSED (9 FAILED, 0 SKIPPED)
+  SCORE: 66%
+═══════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════
+  ABLATION COMPLETE — mode comparison:
+    full: 14/27 (51%)
+    no-kg: 19/27 (70%)
+    no-orchestrator: 22/27 (81%)
+    no-personality: 18/27 (66%)
+═══════════════════════════════════════════════════════════════
+
+  Detailed results: /Users/brndy.747/Projects/ONI/oni/bench/results/20260319_005510/summary.csv
+  Debug logs:       /Users/brndy.747/Projects/ONI/oni/bench/results/20260319_005510/<task_id>/debug.log
+  Telemetry:        /Users/brndy.747/Projects/ONI/oni/bench/results/20260319_005510/<task_id>/telemetry.json
+
+Telemetry summary written to /Users/brndy.747/Projects/ONI/oni/bench/results/20260319_005510/summary.json
+
+  Summary JSON: /Users/brndy.747/Projects/ONI/oni/bench/results/20260319_005510/summary.json
+

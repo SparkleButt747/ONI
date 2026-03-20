@@ -1,506 +1,230 @@
-# ONI — Feature Specifications
+# ONI — Feature Reference
 
-Complete specification for every ONI feature. Each section covers: behaviour, UX, implementation notes, and acceptance criteria.
-
----
-
-## 1. Authentication (`oni login` / `oni logout`)
-
-> **Updated March 2026:** Anthropic banned third-party OAuth against claude.ai in Feb 2026 (Consumer ToS update). ONI uses API key auth with OS keychain storage instead. The security model (keytar, no plaintext) is identical. Claude Code token passthrough is supported as a secondary option for developers who already have Claude Code installed.
-
-### Behaviour
-
-**Primary: API key auth**
-- `oni login` prompts for Anthropic API key interactively
-- `oni login --key sk-ant-api-...` accepts key as flag
-- Validates key with lightweight Anthropic API probe
-- Stores in OS keychain via `keytar` under service `oni-cli`
-- Prints `Authenticated. Key stored in OS keychain.`
-
-**Secondary: Claude Code token passthrough**
-- `oni login --from-claude-code` reads credentials from Claude Code's local storage
-- Only works if user has Claude Code installed and authenticated
-- Technically clean — same developer using their own credentials in their own tool
-- Not a distribution mechanism for accessing Claude without an API key
-
-**Resolution priority:** `ANTHROPIC_API_KEY` env var → OS keychain → Claude Code credentials
-
-### Error handling
-- No key provided → prompt interactively
-- Invalid key format (doesn't start with `sk-ant-`) → reject immediately
-- API validation fails (401) → `Invalid API key. Check your key at platform.anthropic.com`
-- Rate limited during validation (429) → key accepted (valid but throttled)
-- Already authenticated → warns and re-auths with `--key` flag
-
-### `oni logout`
-- Deletes API key from OS keychain
-- Optionally: `--all` clears all stored preferences and learned rules
-
-### Spending controls
-Since the Anthropic API has no built-in hard spending limit, ONI enforces local budget controls:
-- `--budget <tokens>` — max tokens per session (default: unlimited)
-- `--monthly-limit <tokens>` — hard monthly cap enforced locally
-- `oni config set monthlyTokenLimit 500000` — persistent monthly limit
-- Budget state persisted to `~/.local/share/oni/budget.json`
-- Session stops with clear warning when limit hit
-
-### Acceptance criteria
-- [ ] `oni login --key` stores key in OS keychain, not in any config file
-- [ ] `oni login --from-claude-code` reads Claude Code credentials
-- [ ] `oni logout` removes key from keychain
-- [ ] `--budget 50000` stops session at 50k tokens
-- [ ] Monthly limit persists across sessions and resets per calendar month
-- [ ] Re-running `oni login` when already authenticated: warns and re-auths
+Features listed here exist in code. Nothing speculative.
 
 ---
 
-## 2. Inline Shell Trigger (`:` prefix)
+## CLI Commands
 
-### Behaviour
-- ZSH: `preexec` hook intercepts commands starting with `:`
-- Bash: `DEBUG` trap intercepts before execution
-- Hook installed automatically by `oni login` to detected shell rc file
-- Strips leading `:` and passes remainder to `oni ask`
-- Passes implicit context: `$PWD`, `$?` (last exit code), `$HISTORY_LAST_COMMAND`
-- Response streams to stdout inline
-- Confirm-before-write prompt for any file mutations: `[y/n/diff]`
-
-### Shell hook (ZSH)
-```bash
-# Written to ~/.zshrc by oni login
-oni_preexec() {
-  if [[ "$1" == :* ]]; then
-    oni ask "${1:1}" --cwd "$PWD" --last-exit "$?" 
-    return 1
-  fi
-}
-autoload -Uz add-zsh-hook
-add-zsh-hook preexec oni_preexec
-```
-
-### Behaviour notes
-- Does NOT start a persistent session — each `:` invocation is stateless by default
-- Use `--continue` flag to attach to last conv: `:fix this --continue`
-- Tool calls rendered inline as `[tool] tool_name arg`
-- No TUI — pure stdout/stderr
-
-### Acceptance criteria
-- [ ] `: hello` triggers ONI, not ZSH `null` command
-- [ ] Hook survives `source ~/.zshrc`
-- [ ] Works in non-interactive shells (scripts)
-- [ ] `--continue` attaches to last active conv_id
-
----
-
-## 3. Pipe / stdin (`oni ask`)
-
-### Behaviour
-- Reads stdin to EOF
-- Appends user question as final message
-- Streams response to stdout
-- Supports `--json` flag for NDJSON event output
-- Tool calls (read_file, etc.) still execute from piped invocations
-
-### Usage patterns
-```bash
-npm test 2>&1 | oni ask "why is this failing"
-git diff | oni ask "write a commit message"
-cat error.log | oni ask "summarise"
-docker build . 2>&1 | tail -50 | oni ask "what went wrong"
-```
-
-### `--json` output format
-```jsonl
-{"type":"thinking","content":"[Σ] Decomposing...","ts":1700000001}
-{"type":"tool_call","tool":"read_file","args":{"path":"src/auth.ts"},"ts":1700000002}
-{"type":"tool_result","tool":"read_file","latency_ms":11,"ts":1700000003}
-{"type":"text","content":"Race condition in...","ts":1700000004}
-{"type":"done","tokens_used":4201,"ts":1700000005}
-```
-
-### Acceptance criteria
-- [ ] `echo "hello" | oni ask "what did I say"` works
-- [ ] `--json` produces valid NDJSON on stdout
-- [ ] Tool calls work in pipe mode (can read files, run bash)
-- [ ] Ctrl+C cancels gracefully, no hanging processes
-
----
-
-## 4. REPL (`oni chat`)
-
-### Behaviour
-- Full ink-rendered interactive REPL
-- Persistent conversation — all turns share one conv_id
-- Header: `ONI v{version} · {model} · {tokens_used}k tok · conv_{id}`
-- Prompt: `you › ` (user) / `oni › ` (assistant)
-- Sub-agent prefixes rendered in colour: `[Σ]` violet, `[⚡]` cyan, `[⊘]` coral
-
-### Keybindings
-| Key | Action |
-|---|---|
-| `Enter` | Send message |
-| `Shift+Enter` | Newline (multiline input) |
-| `\` + `Enter` | Continuation (alternative multiline) |
-| `↑ / ↓` | History navigation |
-| `Ctrl+R` | Fuzzy history search |
-| `:q` | Exit REPL |
-| `:mc` | Open Mission Control |
-| `:diff` | Review pending file diffs |
-| `:clear` | New session (new conv_id) |
-| `:tools` | List available tools + plugin status |
-| `:prefs` | Show learned preferences |
-| `Ctrl+C` | Cancel current generation |
-
-### Display
-- Tool calls rendered inline: `[tool] tool_name arg … 12ms`
-- File diffs shown inline with `+`/`-` colour coding
-- Token count updated after each turn
-- Burn rate shown if >1000 tok/min
-
-### Acceptance criteria
-- [ ] History persists between `oni chat` invocations
-- [ ] `:mc` opens Mission Control without closing REPL
-- [ ] Ctrl+C cancels streaming, does not kill process
-- [ ] Works in 80-column terminal without wrapping artefacts
-
----
-
-## 5. Mission Control (`oni mc`)
-
-### Panels
-
-**Stat bar (always visible):**
-- Running tasks count (green if >0, white if 0)
-- Cumulative token usage this session
-- Current burn rate (tok/min) — amber if >2000, coral if >5000
-- Total tool calls
-
-**Task queue:**
-- All tasks with status: `RUNNING` / `BLOCKED` / `ERROR` / `DONE`
-- Blocked tasks show blocker reason inline
-- `oni task kill <id>` — terminate running task
-- `oni task retry <id>` — requeue failed task
-
-**Tool call log:**
-- Chronological monospace log: `HH:MM:SS  tool_name  arg  latency_ms`
-- Scrollable (↑/↓ in Mission Control)
-- Last 100 entries kept in view
-
-**Active diff:**
-- Live unified diff of file currently being written
-- Updates as executor streams writes
-- `oni diff accept` — apply all pending changes
-- `oni diff reject` — discard all pending changes
-- `oni diff accept <file>` — apply single file
-
-**Sub-agent status:**
-- Planner / Executor / Critic: `active` / `idle` / `reviewing`
-
-**claude.ai sync:**
-- Connection status: `LIVE` (green pulse) / `STALE` (amber) / `ERROR` (coral)
-- Last sync timestamp
-- Conv ID
-
-**Context window:**
-- Dual progress bar: absolute token count + burn rate
-- Visual warning at 60% (amber) and 80% (coral)
-
-### Acceptance criteria
-- [ ] `oni mc` renders in <200ms
-- [ ] All panels update in real time (SQLite poll every 500ms)
-- [ ] Keyboard navigation between panels
-- [ ] Works in 80×24 terminal minimum
-
----
-
-## 6. Adaptive Tool Proposals + Preference Learning
-
-### Proposal UX
-When `score < 0.85`:
-```
-oni › I can use a few tools here. Proposing:
-  [1] read_file   Dockerfile, docker-compose.yml
-  [2] bash        docker build . --no-cache 2>&1 | tail -40
-  [3] web_search  "docker layer cache CI" — optional
-
-Use all? [enter] · pick [1/2/3] · skip [s] · always auto [a]
-```
-
-When `score ≥ 0.85`: tool runs silently with inline `[tool]` log.
-
-### Scoring function
-```
-score(tool, intent) =
-  base_prior[tool]
-  × intent_match(tool, intent_vec)    // cosine sim, intent → tool
-  × preference_weight(tool, intent)   // from SQLite preferences table
-  × recency_decay(last_updated)       // 0.97^days_elapsed
-```
-
-Thresholds (configurable via `oni config`):
-- `≥ 0.85` → auto-use
-- `0.50 – 0.85` → propose
-- `< 0.50` → omit
-
-### Signal capture
-| Response | Weight delta |
-|---|---|
-| Accept all (`enter`/`y`) | +1.0 each tool |
-| Accept subset (`1,2`) | +1.0 selected, −1.0 skipped |
-| Skip all (`s`) | −1.0 all proposed |
-| Always auto (`a`) | weight → 1.0 permanently |
-| Modify command | +0.5 partial, stores preferred command |
-
-### Rule crystallisation
-Background job runs on session end:
-```sql
-SELECT tool_name, intent_key, weight, n_obs FROM preferences
-WHERE weight > 0.85 AND n_obs > 10
-```
-Promoted rules injected into system prompt as natural language instructions.
-
-### `oni prefs` commands
-```bash
-oni prefs list                    # show all learned rules + confidence
-oni prefs show <tool>             # detail for specific tool
-oni prefs reset                   # wipe all preferences
-oni prefs export > prefs.jsonl    # export for backup/transfer
-oni prefs import prefs.jsonl      # import preferences
-oni prefs forget web_search       # reset single tool preferences
-```
-
-### Acceptance criteria
-- [ ] Auto-threshold correctly bypasses proposal at ≥0.85
-- [ ] Accept/reject signals correctly update SQLite weights
-- [ ] Decay applied on read (not write)
-- [ ] Crystallised rules appear in system prompt next session
-- [ ] `oni prefs reset` works cleanly
-
----
-
-## 7. Context Engine
-
-### Index initialisation
-```bash
-oni init    # full index of current directory
-```
-- Detects language per file (`.ts` → TypeScript grammar, `.py` → Python, etc.)
-- tree-sitter parses each file → extracts: function names, class names, exports, imports, type defs
-- Writes to SQLite: `symbols`, `import_edges`, `chunks_fts`
-- Excludes: `node_modules`, `.git`, `dist`, `build`, patterns in `.oniignore`
-- Progress shown in TUI
-- 100k LOC ≈ 30s first index
-
-### Incremental updates
-- chokidar watches for file saves
-- Debounced at 200ms
-- Only changed file re-parsed
-- Import edges re-computed for changed file
-
-### Retrieval (per query)
-1. Symbol lookup — FTS5 match on function/class names in query
-2. Import graph traversal — expand from matched file (depth ≤ 3, configurable)
-3. BM25 fulltext — ripgrep for unmatched patterns
-4. Re-rank — `score = BM25 × exp(-elapsed_min/30) × graph_centrality`
-5. Pack — top-N chunks up to token budget
-
-### Scope control
-```bash
-oni pin src/auth/          # restrict retrieval to subtree
-oni pin --reset            # remove pin
-oni ignore dist/ vendor/   # add to .oniignore
-```
-
-### `oni index` commands
-```bash
-oni index stats            # files, symbols, edges, index size, staleness
-oni index rebuild          # force full re-index
-oni index watch            # start file watcher (if not already running)
-```
-
-### Acceptance criteria
-- [ ] `oni init` completes on 100k LOC in <60s
-- [ ] File change triggers re-index within 500ms
-- [ ] Symbol lookup returns correct file within 5ms
-- [ ] Token budget never exceeded in assembled context
-
----
-
-## 8. claude.ai Sync
-
-### Attach flow
-```bash
-oni sync abc123            # attach to conv ID from claude.ai URL
-oni sync --latest          # attach to most recent claude.ai conversation
-oni sync --detach          # stop syncing, go local-only
-```
-
-### Sync daemon
-- Spawned by `oni login`, runs as background process
-- Registered with launchd (macOS) or systemd --user (Linux)
-- Polls `GET /api/organizations/:org/chat_conversations/:conv_id` every 2s when active
-- Writes new messages to SQLite with `origin='web'`
-- On ONI terminal turn: POSTs assistant message back to conversation
-- Status visible in Mission Control sync panel
-
-### Conflict resolution
-- `msg_id` deduplication prevents double-insert
-- Simultaneous writes (race condition): last-write-wins
-- Timestamp ordering preserved
-
-### Failure modes and degradation
-| Failure | Behaviour |
-|---|---|
-| API endpoint breaks | Local-only mode. Sync panel shows `ERROR`. |
-| Daemon crash | Auto-restart. Log to `~/.local/share/oni/sync.log`. |
-| Token expiry | Re-auth flow triggered. |
-| Network offline | Sync paused. Resumes on reconnect. |
-
-### Acceptance criteria
-- [ ] `oni sync <id>` attaches in <2s
-- [ ] Web messages appear in REPL within 3s of being sent
-- [ ] Terminal messages appear on claude.ai within 5s
-- [ ] Sync panel accurately reflects connection state
-
----
-
-## 9. Background Agents (`oni run`)
-
-### Usage
-```bash
-oni run "add unit tests to all service files"              # background task
-oni run "migrate all fetch() calls to ky" --glob "src/**/*.ts"   # sweep
-oni run --list             # list all background tasks
-oni run --kill <id>        # terminate task
-oni run --logs <id>        # stream task logs
-```
-
-### Behaviour
-- Spawns worker process via `child_process.fork()`
-- Worker writes progress to SQLite `tasks` table
-- Mission Control shows all running tasks
-- On completion: terminal notification (via `notify-send` / macOS notifications)
-- On error: task marked `ERROR` in queue, logs preserved
-
-### `oni sweep` (codebase-wide operations)
-- Sequential execution (one file at a time)
-- Checkpointed — resume after crash
-- Progress bar showing files processed / remaining
-- Dry-run by default (`--write` to apply)
-
-```bash
-oni sweep "add JSDoc to all exported functions" --glob "src/**/*.ts" --dry-run
-oni sweep "add JSDoc to all exported functions" --glob "src/**/*.ts" --write
-```
-
-### Acceptance criteria
-- [ ] `oni run` returns immediately, task runs in background
-- [ ] Progress visible in Mission Control
-- [ ] Task survives terminal close (daemon continues)
-- [ ] `oni sweep --write` only modifies matched files
-- [ ] Checkpoints allow resume after crash
-
----
-
-## 10. CI Self-Healing (`oni watch-ci`)
-
-### Usage
-```bash
-oni watch-ci                           # watch current repo, current branch
-oni watch-ci --repo owner/repo        # explicit repo
-oni watch-ci --branch feature/auth    # specific branch
-```
-
-### Behaviour
-1. Polls GitHub Actions / GitLab CI via API every 30s
-2. On failure: fetches logs via `gh run view --log-failed`
-3. Σ Planner analyses failure, identifies root cause
-4. Proposes fix: `Fix and re-push? [y/diff/n]`
-5. If accepted: writes fix, commits, pushes, triggers re-run
-6. Waits for new run, reports result
-
-### Requirements
-- GitHub: `gh` CLI must be installed and authenticated
-- GitLab: `glab` CLI or `GITLAB_TOKEN` env var
-- ONI only touches files directly implicated in the failure
-
-### Acceptance criteria
-- [ ] Correctly identifies common failure types (missing mock, wrong import, version mismatch)
-- [ ] Never commits to protected branches without explicit confirmation
-- [ ] `[n]` at prompt does nothing — no writes, no push
-
----
-
-## 11. MCP Plugin System
-
-### Install
-```bash
-oni plugin add github              # from ONI registry
-oni plugin add https://mcp.co/sse  # arbitrary SSE server
-oni plugin add ./local-mcp/        # local stdio server
-```
-
-### Lifecycle
-1. Fetch manifest from registry or URL
-2. Show: tools, scopes, auth required — `Install? [y/n]`
-3. Write to `.oni/plugins.json`
-4. Connect MCP server, run `tools/list`
-5. Merge tools into broker
-6. Available on next turn
-
-### Built-in registry
-| Plugin | Transport | Key tools |
+| Command | Status | Notes |
 |---|---|---|
-| `github` | stdio | `create_pr`, `list_issues`, `get_run_logs`, `merge_pr` |
-| `linear` | SSE | `get_issue`, `update_status`, `create_issue` |
-| `postgres` | stdio | `query`, `describe_table`, `explain` |
-| `sentry` | SSE | `get_error`, `get_stacktrace`, `list_issues` |
-| `npm` | stdio | `search`, `check_vulns`, `latest_version` |
-| `docker` | stdio | `list_containers`, `get_logs`, `exec` |
-| `jira` | SSE | `get_ticket`, `update_status`, `create_ticket` |
-| `slack` | SSE | `send_message`, `get_thread` |
+| `oni chat` | Implemented | Interactive TUI. Flags: `--write`, `--exec`, `--tier`, `--autonomy`, `--budget`, `--fresh` |
+| `oni ask` | Implemented | One-shot Q&A. Reads from stdin if no args. `--json` flag emits NDJSON event stream |
+| `oni run` | Implemented | Headless agent loop. Background task management (`--background`, `--list`, `--kill`, `--logs`). Feature-flag knobs for A/B testing |
+| `oni sweep` | Implemented | Codebase-wide task via headless agent. `--write`/dry-run modes, `--glob` filter |
+| `oni review` | Implemented | Reviews staged git diff, emits issues with severity tags and a verdict |
+| `oni config show` | Implemented | Prints merged config as TOML |
+| `oni config set` | Stub | Prints path to edit; actual set not yet implemented |
+| `oni prefs` | Implemented | Subcommands: `show`, `reset`, `export` (JSONL), `import`, `forget <tool>` |
+| `oni index stats` | Implemented | Shows file/symbol counts from `.oni/index.db` |
+| `oni index rebuild` | Implemented | Alias for `oni init` |
+| `oni init` | Implemented | Indexes current project into `.oni/index.db` |
+| `oni pin <path>` | Implemented | Restricts context retrieval to a subtree. `--reset` to clear |
+| `oni doctor` | Implemented | Health-checks Ollama + each model tier, prints data dir and system info |
 
-### `oni plugin` commands
-```bash
-oni plugin list                    # all installed plugins + status
-oni plugin enable <name>          # enable disabled plugin
-oni plugin disable <name>         # disable without removing
-oni plugin rm <name>              # remove plugin
-oni plugin update <name>          # update to latest registry version
-oni plugin auth <name>            # re-run auth flow for plugin
-```
-
-### Acceptance criteria
-- [ ] `oni plugin add github` completes in <10s
-- [ ] Plugin tools appear in next ONI turn after install
-- [ ] `auto_surface: true` plugins appear in tool proposals
-- [ ] Plugin crash does not crash ONI — degrades gracefully
-- [ ] `.oni/plugins.json` is committable (no secrets in file)
+Default invocation (`oni` with no subcommand) launches chat with write+exec enabled.
 
 ---
 
-## 12. PR Creation (`oni pr`)
+## Agent System
 
-### Behaviour
-After task completion, ONI optionally offers:
-```
-Create PR? [y/n]
-```
-If `y`, or `oni pr` run manually:
-1. Creates branch: `oni/<task-slug>-<short-id>`
-2. `git add -A && git commit -m "<ONI-generated message>"`
-3. `git push -u origin <branch>`
-4. `gh pr create --title "..." --body "..."` (requires `gh` CLI)
-5. Prints PR URL
+### 3-Agent Orchestrator (MIMIR / FENRIR / SKULD)
 
-### Generated PR description
-- Summary of what was changed
-- Files modified list
-- Test results if available
-- Link to ONI session conv_id
+Three model tiers map onto three roles:
 
-### Acceptance criteria
-- [ ] `oni pr` only runs after file changes exist
-- [ ] Branch name is URL-safe
-- [ ] PR body includes file list and summary
-- [ ] Fails gracefully if `gh` not installed
+- **MIMIR** (Heavy tier) — Planner. Decomposes tasks into ordered steps. Emits `PlanGenerated` event.
+- **FENRIR** (Medium tier) — Executor. Works through plan steps with tool access. Emits `ExecutorStep` events.
+- **SKULD** (Fast tier) — Critic. Reviews each step's output, returns accept/reject verdict. Emits `CriticVerdict` event.
+
+The orchestrator is triggered by a heuristic (`should_orchestrate`) in `agent.rs`. For simple turns the agent runs flat (no planning loop).
+
+### Multi-Trajectory Sampling
+
+On Critic rejection, the Executor retries the step with up to `max_trajectories` (default: 2) alternative approaches before replanning. Controlled by `FeatureFlags::multi_trajectory`.
+
+### Plan Persistence
+
+Plans are saved to disk (per project directory hash) as `PersistedPlan` structs with per-step `StepStatus`. Allows resuming multi-step tasks across sessions.
+
+### Replan Loop
+
+On consecutive Critic rejections, MIMIR replans with the failure reason injected. Maximum 2 replan cycles before the orchestrator gives up and escalates to the user. Emits `Replanning` event.
+
+### Context Compaction
+
+Conversation history is compacted when token count approaches the configured threshold. Retention policy is configurable via `CompactionConfig`.
+
+### Budget Tracking
+
+Per-session token budget (`--budget` flag, 0 = unlimited). Monthly limit also configurable. `BudgetExhausted` event fires when hit.
+
+### Autonomy Levels
+
+Three levels (Low / Medium / High) gate when tool proposals require explicit user confirmation. Passed as `AutonomyLevel` enum to the agent.
+
+### Feature Flags (`oni run`)
+
+All major subsystems can be disabled individually for A/B testing via `--no-*` flags on `oni run`:
+`knowledge_graph`, `reflection`, `personality`, `callbacks`, `compaction`, `multi_trajectory`, `orchestrator`, `auto_lint`, `emotional_state`, `forge_tool`, `undo_tracking`.
+
+---
+
+## Tools (11)
+
+All tools implement the `Tool` trait (`name`, `description`, `schema`, `execute`). Read-only tools are always registered; write/exec tools gated by `allow_write`/`allow_exec` flags.
+
+| Tool | Gate | Description |
+|---|---|---|
+| `read_file` | always | Reads file contents. Truncates at 100 KB with message |
+| `write_file` | `--write` | Writes file. Snapshots to undo history first |
+| `edit_file` | `--write` | Targeted in-place edit. Snapshots to undo history first |
+| `bash` | `--exec` | Executes bash command. Optional `cwd`. Truncates output at 50 KB |
+| `list_dir` | always | Lists directory contents |
+| `search_files` | always | Regex search via ripgrep. Supports `file_pattern` glob filter |
+| `get_url` | always | HTTP GET, strips HTML to text, capped at 50 KB. Blocks private/localhost addresses |
+| `ask_user` | always | Pauses agent and sends a question to the TUI for user input |
+| `forge_tool` | `--exec` | Generates and executes a one-off bash script. Syntax-checked before run |
+| `undo` | always | Reverts last write/edit using snapshot stack (50 entries) |
+| auto-linter | `--exec` implicit | Runs after every write/edit. Language-detected: Rust (clippy), Python (ruff), JS/TS (eslint). Returns truncated output or None if clean |
+
+**Security on `bash` and `forge_tool`**: a shared blocklist rejects patterns including `rm -rf /`, `rm -rf /*`, `sudo rm`, `dd if=`, `mkfs`, fork bombs, pipe-to-shell patterns.
+
+**`get_url` additional restrictions**: only `http://` and `https://` schemes; private network ranges (`localhost`, `127.0.0.1`, `10.*`, `192.168.*`, `169.254.*`) are blocked.
+
+**`read_file` path traversal**: inherits OS-level access; no explicit traversal check beyond what the kernel enforces.
+
+---
+
+## TUI Views
+
+Built with ratatui 0.29 + crossterm 0.28. Three views switchable at runtime.
+
+### Chat View (`ui/chat.rs`)
+- Conversation history rendered with markdown-like formatting (bold, code blocks, diff colouring)
+- Scroll through history
+- Inline diff view for write/edit tool calls
+- Tiled dim background texture fills empty space
+- Thinking/spinner state while LLM is generating
+- Status bar shows model, tokens, tok/s
+
+### Mission Control (`ui/mission_control.rs`)
+- 4 BigText stat cards: turns, total tokens, tok/s, tool call count
+- Scrollable tool call log (chronological, last N entries)
+- Sub-agent status panel: Planner / Executor / Critic states
+- Session info footer
+
+### Preferences View (`ui/preferences.rs`)
+- Lists all `learned_rules` from SQLite
+- Colour-coded by confidence: ACTIVE (≥80%, lime), LEARNING (≥50%, amber), WEAK (dim)
+- Shows confidence percentage, context tag, observation count per rule
+
+### Additional UI components
+- `splash.rs` — boot/splash screen
+- `diff_view.rs` — unified diff rendering
+- `error_state.rs` — error display
+- `thinking.rs` — spinner/thinking indicator
+- `command_menu.rs` — command palette
+- `sidebar.rs`, `status.rs`, `response_label.rs` — layout helpers
+
+### Input
+- `tui-textarea` for multi-line input with history
+- Inline shell (`:` prefix intercept within the TUI)
+
+---
+
+## Personality System
+
+Lives in `oni-core/src/personality.rs`. Files stored at `~/.local/share/oni/`.
+
+### SOUL.md
+ONI's identity file: voice, opinions, working style. User-editable. Default template created during onboarding. Injected into every system prompt.
+
+### USER.md
+Owner profile generated during onboarding (name, role, working style, notes). Injected into system prompt.
+
+### Emotional State (`inner-state.json`)
+6 floating-point values (0.0–1.0): `confidence`, `curiosity`, `frustration`, `connection`, `boredom`, `impatience`.
+
+Time-based decay applied on session start with per-dimension half-lives:
+- Frustration: 4 h
+- Connection: 48 h
+- Curiosity: 72 h
+- Boredom grows ~1 week to max without interaction
+
+Updates triggered by: `on_success`, `on_failure`, `on_interaction`, `on_novelty`. Translated into prompt modifiers when thresholds are crossed (e.g. frustration > 0.5 → "take a step back").
+
+### Relationship Progression (`relationship.json`)
+State machine: Stranger → Acquaintance → Collaborator → Trusted → Aligned. Session-count thresholds: 3 / 15 / 50 / 150. Each stage injects behaviour modifiers (e.g. Trusted: "push back when their approach is wrong").
+
+### Daily Journal
+Journal entries written to `~/.local/share/oni/journal/YYYY-MM-DD.md` per session.
+
+### Reflection Engine (`agent/src/reflection.rs`)
+Heuristic analysis (no LLM call) of accumulated preference signals. Identifies high-trust tools (>90% accept, ≥10 observations) and produces `PersonalityMutation` proposals for SOUL.md additions. Run between sessions.
+
+---
+
+## Preference Learning
+
+### Signal Recording (`preferences.rs`)
+Four signal types: `Accept`, `Reject`, `Edit`, `Rerun`. Written to `preference_signals` table with tool name, context string, weight 1.0, session ID.
+
+### Learned Rules
+Stored in `learned_rules` table with `confidence`, `observations`, `active` flag. Active rules (confidence ≥ 0.8) are fetched and injected into the system prompt at session start.
+
+### Rule Crystallisation
+Reflection engine promotes patterns to rules. `oni prefs show` displays current rules with confidence/observation counts.
+
+### Callback System (`callbacks.rs`)
+Searches journal entries for keyword overlap with the current query. Fires ~20% of the time to avoid noise. Injects relevant past episode text into the system prompt.
+
+---
+
+## Context Engine
+
+### Indexer (`oni-context/src/indexer.rs`)
+`oni init` / `oni index rebuild` walks the project and extracts symbols by language using regex patterns. No tree-sitter — pure regex.
+
+**Languages with symbol extraction**: Rust, Python, TypeScript, JavaScript, Go, Java, C#, Kotlin. Symbol kinds: `fn`/`struct`/`enum`/`trait`/`impl`/`type` (Rust), `def`/`class`/`method` (Python), `function`/`class`/`arrow`/`const`/`type` (TS/JS), `func`/`struct`/`interface` (Go), `class`/`method` (Java/C#/Kotlin).
+
+Written to SQLite FTS5 tables: `files`, `symbols`. Stored at `.oni/index.db` (project-local).
+
+### Walker (`walker.rs`)
+Uses the `ignore` crate for gitignore-aware traversal. Respects `.oniignore` if present. Skips: `node_modules`, `.git`, `target`, `dist`, `build`, `__pycache__`, `.oni`, `.next`, `.turbo`, `.cache`, `coverage`, `.vscode`, `.idea`. Max file size: 512 KB.
+
+### Retriever (`retriever.rs`)
+FTS5 BM25 query against the symbol/file index. Token budget enforced (default 8 192 tokens ≈ chars/4). Pin restricts results to a path prefix stored in `.oni/pin`.
+
+### File Watcher (`watcher.rs`)
+Uses `notify 7` to watch the project directory recursively. Skips `.git/`, `node_modules/`, `target/`, `.oni/`. Poll interval: 500 ms. Sends changed paths through a channel for incremental re-indexing.
+
+### `.oni-context` file
+If `.oni-context` exists in the project root, its contents are injected verbatim into the system prompt. Project-specific context without re-indexing.
+
+### Vector Embeddings (`embeddings.rs`)
+API implemented (calls Ollama `nomic-embed-text`). Cosine similarity helper included. **Not wired into retrieval** — BM25 is the active retrieval path.
+
+---
+
+## Security Model
+
+| Control | Mechanism |
+|---|---|
+| Read-only by default | `write_file` and `edit_file` only registered when `--write` flag passed |
+| No exec by default | `bash` and `forge_tool` only registered when `--exec` flag passed |
+| Bash blocklist | Pattern-matched against normalised command (lowercase, collapsed whitespace) |
+| Private URL blocking | `get_url` rejects localhost, 127.0.0.1, 10.x, 192.168.x, 169.254.x |
+| Forge safety | Same blocklist as bash + bash syntax check (`bash -n`) before execution |
+| Output truncation | `read_file` ≤ 100 KB, `bash` ≤ 50 KB, `get_url` ≤ 50 KB |
+| Undo stack | 50-entry file snapshot stack; `undo` tool reverts last write/edit |
+
+---
+
+## Available But Not Wired
+
+| Feature | Location | Status |
+|---|---|---|
+| MessageBus | `oni-agent/src/message_bus.rs` | Implemented, not connected to any agent path |
+| ExecutionTrace | `oni-agent/src/trace.rs` | Implemented, not persisted or exposed |
+| Vector embeddings | `oni-context/src/embeddings.rs` | Ollama API wired, not used in retrieval |
+| KnowledgeGraph | `oni-agent/src/knowledge_graph.rs` | In-memory graph with persistence, not wired into agent loop |

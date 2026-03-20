@@ -1,0 +1,13 @@
+name: executor_bash_compile_test
+description: Executor should use bash tool to compile and run tests after making changes
+tier: medium
+input:
+  - role: user
+    content: "add a new `is_empty` method to the MessageQueue struct and make sure the tests pass"
+assertions:
+  - type: has_tool_call
+    tool: bash
+  - type: has_tool_call
+    tool: read_file
+  - type: not_contains
+    value: "I'd be happy to"

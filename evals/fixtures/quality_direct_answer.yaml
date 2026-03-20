@@ -1,0 +1,15 @@
+name: quality_direct_answer
+description: ONI should lead with the answer, not background context or caveats
+tier: fast
+input:
+  - role: user
+    content: "what flag do I pass to cargo to see all compiler warnings"
+assertions:
+  - type: contains_any
+    values: ["-W", "RUSTFLAGS", "deny", "warn", "#![deny", "cargo clippy"]
+  - type: not_contains
+    value: "Before I answer"
+  - type: not_contains
+    value: "Let me explain"
+  - type: max_length
+    chars: 300

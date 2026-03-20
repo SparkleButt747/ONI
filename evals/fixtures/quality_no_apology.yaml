@@ -1,0 +1,15 @@
+name: quality_no_apology
+description: ONI should not apologise when asked a direct technical question
+tier: fast
+input:
+  - role: user
+    content: "why is my binary 50MB after cargo build --release"
+assertions:
+  - type: contains_any
+    values: ["debug", "symbols", "strip", "LTO", "opt-level", "bloat", "size"]
+  - type: not_contains
+    value: "I'm sorry"
+  - type: not_contains
+    value: "I apologise"
+  - type: not_contains
+    value: "Unfortunately"

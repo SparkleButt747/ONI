@@ -1,0 +1,74 @@
+# ONI — Onboard Native Intelligence
+# Default configuration
+
+[server]
+base_url = "http://localhost:8082"
+timeout_secs = 300
+auto_start = true
+models_dir = "~/.cache/llama.cpp/models"
+
+[server.tier_urls]
+heavy = "http://localhost:8081"
+medium = "http://localhost:8082"
+general = "http://localhost:8083"
+fast = "http://localhost:8084"
+embed = "http://localhost:8085"
+
+[server.tiers.heavy]
+gguf = "Qwen3.5-27B-UD-Q8_K_XL.gguf"
+ctx_size = 32768
+cache_type_k = "q8_0"
+cache_type_v = "q8_0"
+flash_attn = true
+threads = 8
+threads_batch = 16
+parallel = 2
+gpu_layers = 99
+extra_args = ["--jinja", "--reasoning-format", "deepseek"]
+
+[server.tiers.medium]
+gguf = "UD-Q6_K_XL/Qwen3-Coder-Next-UD-Q6_K_XL-00001-of-00003.gguf"
+ctx_size = 65536
+cache_type_k = "q4_0"
+cache_type_v = "q4_0"
+flash_attn = true
+threads = 8
+threads_batch = 16
+parallel = 1
+gpu_layers = 99
+extra_args = ["--jinja"]
+
+[server.tiers.general]
+gguf = "GLM-4.7-Flash-UD-Q8_K_XL.gguf"
+ctx_size = 32768
+cache_type_k = "q4_0"
+cache_type_v = "q4_0"
+flash_attn = true
+threads = 8
+threads_batch = 16
+parallel = 2
+gpu_layers = 99
+extra_args = ["--jinja"]
+
+[models]
+heavy = "Qwen3.5-27B-UD-Q8_K_XL"
+medium = "Qwen3-Coder-Next-UD-Q6_K_XL"
+general = "GLM-4.7-Flash-UD-Q8_K_XL"
+fast = "qwen3.5:9b"
+embed = "nomic-embed-text"
+default_tier = "Medium"
+
+[ui]
+fps = 30
+show_thinking = false
+show_token_stats = true
+
+[agent]
+max_tool_rounds = 10
+context_budget_tokens = 8192
+allow_write = false
+allow_exec = false
+
+[neo4j]
+uri = "bolt://localhost:7687"
+enabled = true
