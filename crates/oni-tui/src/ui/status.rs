@@ -6,22 +6,25 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-/// Top status bar: SYSTEM_ONI tag | session ID | model name
+/// Top status bar — Marathon industrial chrome.
 pub fn draw_status_bar(app: &App, frame: &mut Frame, area: Rect) {
     let model_name = app.current_model_name.to_uppercase();
+    let agent_tag = app.active_agent.to_uppercase();
 
     let line = Line::from(vec![
+        // System tag — magenta inverse badge
         Span::styled(
-            format!(" SYSTEM_ONI [{}] ", app.active_agent.to_uppercase()),
+            format!(" SYSTEM_ONI [{}] ", agent_tag),
             Style::default()
                 .fg(palette::BG)
-                .bg(palette::AMBER)
+                .bg(palette::MAGENTA)
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
-            " | ",
+            " \u{2502} ",
             Style::default().fg(palette::BORDER).bg(palette::BG),
         ),
+        // Session ID — lime
         Span::styled(
             format!(" {} ", app.session_id),
             Style::default()
@@ -30,19 +33,20 @@ pub fn draw_status_bar(app: &App, frame: &mut Frame, area: Rect) {
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
-            " | ",
+            " \u{2502} ",
             Style::default().fg(palette::BORDER).bg(palette::BG),
         ),
+        // Model info — electric blue inverse
         Span::styled(
             format!(" MODEL: {} ", model_name),
             Style::default()
                 .fg(palette::BG)
-                .bg(palette::AMBER)
+                .bg(palette::ELECTRIC_BLUE)
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
             format!(" {} ", app.current_tier.display_name()),
-            Style::default().fg(palette::AMBER).bg(palette::BG),
+            Style::default().fg(palette::ELECTRIC_BLUE).bg(palette::BG),
         ),
     ]);
 
@@ -69,7 +73,7 @@ pub fn draw_footer(app: &App, frame: &mut Frame, area: Rect) {
     } else if ctx_pct >= 60 {
         palette::WARNING
     } else {
-        palette::AMBER
+        palette::MAGENTA
     };
 
     let line = Line::from(vec![
@@ -77,7 +81,7 @@ pub fn draw_footer(app: &App, frame: &mut Frame, area: Rect) {
             format!(" {} ", app.current_tier.display_name()),
             Style::default()
                 .fg(palette::BG)
-                .bg(palette::AMBER)
+                .bg(palette::MAGENTA)
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
@@ -88,6 +92,12 @@ pub fn draw_footer(app: &App, frame: &mut Frame, area: Rect) {
                 ctx_pct
             ),
             Style::default().fg(gauge_color).bg(palette::BG),
+        ),
+        Span::styled(
+            format!(" AUTO:{} ", app.autonomy.display_name().to_uppercase()),
+            Style::default()
+                .fg(palette::BG)
+                .bg(palette::ELECTRIC_BLUE),
         ),
     ]);
 

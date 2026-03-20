@@ -1,5 +1,4 @@
 pub mod chat;
-pub mod chroma;
 pub mod command_menu;
 pub mod diff_view;
 pub mod error_state;
@@ -26,25 +25,23 @@ pub fn draw(app: &mut App, frame: &mut Frame) {
         return;
     }
 
-    // Layout: chroma | status bar | main content | input | footer
+    // Layout: status bar | main content | input | footer
     let rows = Layout::vertical([
-        Constraint::Length(1),  // Chroma stripe
-        Constraint::Length(1),  // Status bar (conv ID, model)
+        Constraint::Length(1),  // Status bar (Marathon industrial chrome)
         Constraint::Fill(1),    // Main content area
         Constraint::Length(3),  // Input area
         Constraint::Length(1),  // Footer (tier + ctx bar)
     ])
     .split(area);
 
-    chroma::ChromaStripe.render(rows[0], frame.buffer_mut());
-    status::draw_status_bar(app, frame, rows[1]);
-    draw_main_content(app, frame, rows[2]);
-    input::draw_input(app, frame, rows[3]);
-    status::draw_footer(app, frame, rows[4]);
+    status::draw_status_bar(app, frame, rows[0]);
+    draw_main_content(app, frame, rows[1]);
+    input::draw_input(app, frame, rows[2]);
+    status::draw_footer(app, frame, rows[3]);
 
     // Draw command menu popup on top of everything if visible
     if app.slash_menu_visible {
-        command_menu::draw_command_menu(app, frame, rows[2]);
+        command_menu::draw_command_menu(app, frame, rows[1]);
     }
 }
 
