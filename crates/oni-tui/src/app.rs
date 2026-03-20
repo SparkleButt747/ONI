@@ -273,6 +273,11 @@ pub struct App {
     pub background_tasks: Vec<BackgroundTask>,
     /// Next background task ID (monotonically increasing).
     pub next_task_id: u32,
+    /// File picker state for @ autocomplete.
+    pub file_picker_visible: bool,
+    pub file_picker_query: String,
+    pub file_picker_selected: usize,
+    pub file_picker_files: Vec<String>,
 }
 
 /// A tool proposal currently shown to the user awaiting y/n/d response.
@@ -365,6 +370,10 @@ impl App {
             permanent_allowed_tools: std::collections::HashSet::new(),
             background_tasks: Vec::new(),
             next_task_id: 1,
+            file_picker_visible: false,
+            file_picker_query: String::new(),
+            file_picker_selected: 0,
+            file_picker_files: Vec::new(),
         }
     }
 
@@ -1466,6 +1475,54 @@ pub async fn run(
                         }
                     }
                 }
+                // File picker navigation — intercept before slash menu / history / textarea
+                else if app.file_picker_visible && key.code == KeyCode::Down {
+                    let filtered_count =
+                        crate::ui::file_picker::filter_files(
+                            &app.file_picker_files,
+                            &app.file_picker_query,
+                        )
+                        .len();
+                    if filtered_count > 0 {
+                        app.file_picker_selected =
+                            (app.file_picker_selected + 1).min(filtered_count.saturating_sub(1));
+                    }
+                } else if app.file_picker_visible && key.code == KeyCode::Up {
+                    app.file_picker_selected = app.file_picker_selected.saturating_sub(1);
+                } else if app.file_picker_visible
+                    && (key.code == KeyCode::Tab || key.code == KeyCode::Enter)
+                {
+                    let filtered =
+                        crate::ui::file_picker::filter_files(
+                            &app.file_picker_files,
+                            &app.file_picker_query,
+                        );
+                    if let Some(path) = filtered.get(app.file_picker_selected).cloned() {
+                        let path = path.clone();
+                        app.input.insert_str(&path);
+                    }
+                    app.file_picker_visible = false;
+                    app.file_picker_query.clear();
+                    app.file_picker_selected = 0;
+                } else if app.file_picker_visible && key.code == KeyCode::Esc {
+                    app.file_picker_visible = false;
+                    app.file_picker_query.clear();
+                    app.file_picker_selected = 0;
+                } else if app.file_picker_visible && key.code == KeyCode::Backspace {
+                    app.file_picker_query.pop();
+                    if app.file_picker_query.is_empty() {
+                        app.file_picker_visible = false;
+                    }
+                    // Also feed backspace into textarea so the @ character can be deleted
+                    app.input.input(key);
+                } else if app.file_picker_visible {
+                    // Any other char — update query (or pass through non-char keys)
+                    if let KeyCode::Char(c) = key.code {
+                        app.file_picker_query.push(c);
+                        app.file_picker_selected = 0;
+                    }
+                    app.input.input(key);
+                }
                 // Escape — return to chat from other views, or close slash menu
                 else if key.code == KeyCode::Esc && app.slash_menu_visible {
                     app.slash_menu_visible = false;
@@ -1644,12 +1701,24 @@ pub async fn run(
                         app.scroll_locked_to_bottom = true;
                     }
                 } else {
+                    // Check if '@' was typed to activate the file picker
+                    let activating_picker = !app.file_picker_visible
+                        && key.code == KeyCode::Char('@');
                     app.input.input(key);
                     // Any keystroke exits history browsing mode
                     app.history_index = None;
                     // When user types, lock scroll to bottom
                     app.scroll_locked_to_bottom = true;
                     app.scroll_offset = 0;
+                    // Activate file picker on '@'
+                    if activating_picker {
+                        app.file_picker_visible = true;
+                        app.file_picker_query.clear();
+                        app.file_picker_selected = 0;
+                        let project_dir = app.project_dir.clone();
+                        app.file_picker_files =
+                            crate::ui::file_picker::collect_project_files(&project_dir);
+                    }
                     // Update slash menu visibility after every keystroke
                     let current = app.input.lines().join("\n");
                     if current.starts_with('/') {

@@ -1,5 +1,6 @@
 pub mod chat;
 pub mod command_menu;
+pub mod file_picker;
 pub mod permission_prompt;
 pub mod diff_view;
 pub mod error_state;
@@ -43,6 +44,17 @@ pub fn draw(app: &mut App, frame: &mut Frame) {
     // Draw command menu popup on top of everything if visible
     if app.slash_menu_visible {
         command_menu::draw_command_menu(app, frame, rows[1]);
+    }
+
+    // Draw file picker popup above the input when @ autocomplete is active
+    if app.file_picker_visible {
+        file_picker::draw_file_picker(
+            &app.file_picker_files,
+            &app.file_picker_query,
+            app.file_picker_selected,
+            frame,
+            rows[2],
+        );
     }
 }
 

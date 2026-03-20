@@ -22,3 +22,4 @@ dirs.workspace = true
 reqwest.workspace = true
 which = "7"
 libc = "0.2"
+walkdir = "2"

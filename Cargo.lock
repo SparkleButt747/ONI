@@ -1581,6 +1581,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tui-textarea",
+ "walkdir",
  "which",
 ]
 
