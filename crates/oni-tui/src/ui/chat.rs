@@ -221,9 +221,13 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
             DisplayMessage::Plan(steps) => {
                 lines.push(Line::from(vec![
                     Span::styled(
+                        " \u{21B3} ",
+                        Style::default().fg(palette::DIM).bg(palette::BG),
+                    ),
+                    Span::styled(
                         " [\u{03A3}] ",
                         Style::default()
-                            .fg(palette::VIOLET)
+                            .fg(palette::ELECTRIC_BLUE)
                             .bg(palette::BG)
                             .add_modifier(Modifier::BOLD),
                     ),
@@ -231,29 +235,29 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
                         " MIMIR ",
                         Style::default()
                             .fg(palette::BG)
-                            .bg(palette::VIOLET)
+                            .bg(palette::ELECTRIC_BLUE)
                             .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         "  STRATEGY FORGED",
                         Style::default()
-                            .fg(palette::VIOLET)
+                            .fg(palette::ELECTRIC_BLUE)
                             .bg(palette::BG),
                     ),
                 ]));
                 for (i, step) in steps.iter().enumerate() {
                     lines.push(Line::from(vec![
                         Span::styled(
-                            format!("   {}. ", i + 1),
-                            Style::default()
-                                .fg(palette::VIOLET)
-                                .bg(palette::BG),
+                            " \u{21B3}  ",
+                            Style::default().fg(palette::DIM).bg(palette::BG),
+                        ),
+                        Span::styled(
+                            format!("{}. ", i + 1),
+                            Style::default().fg(palette::ELECTRIC_BLUE).bg(palette::BG),
                         ),
                         Span::styled(
                             step.clone(),
-                            Style::default()
-                                .fg(palette::TEXT)
-                                .bg(palette::BG),
+                            Style::default().fg(palette::MUTED).bg(palette::BG),
                         ),
                     ]));
                 }
@@ -261,6 +265,10 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
             }
             DisplayMessage::Step { current, total, description } => {
                 lines.push(Line::from(vec![
+                    Span::styled(
+                        " \u{21B3} ",
+                        Style::default().fg(palette::DIM).bg(palette::BG),
+                    ),
                     Span::styled(
                         " [\u{03A8}] ",
                         Style::default()
@@ -278,7 +286,7 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
                     Span::styled(
                         format!("  STEP {}/{}: {}", current, total, description),
                         Style::default()
-                            .fg(palette::CYAN)
+                            .fg(palette::MUTED)
                             .bg(palette::BG),
                     ),
                 ]));
@@ -286,6 +294,10 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
             DisplayMessage::CriticVerdict { accepted, reason } => {
                 if *accepted {
                     lines.push(Line::from(vec![
+                        Span::styled(
+                            " \u{21B3} ",
+                            Style::default().fg(palette::DIM).bg(palette::BG),
+                        ),
                         Span::styled(
                             " [\u{2298}] ",
                             Style::default()
@@ -310,6 +322,10 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
                     ]));
                 } else {
                     lines.push(Line::from(vec![
+                        Span::styled(
+                            " \u{21B3} ",
+                            Style::default().fg(palette::DIM).bg(palette::BG),
+                        ),
                         Span::styled(
                             " [\u{2298}] ",
                             Style::default()
@@ -336,9 +352,13 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
             DisplayMessage::Replanning { cycle, reason } => {
                 lines.push(Line::from(vec![
                     Span::styled(
+                        " \u{21B3} ",
+                        Style::default().fg(palette::DIM).bg(palette::BG),
+                    ),
+                    Span::styled(
                         " [\u{03A3}] ",
                         Style::default()
-                            .fg(palette::AMBER)
+                            .fg(palette::MAGENTA)
                             .bg(palette::BG)
                             .add_modifier(Modifier::BOLD),
                     ),
@@ -346,13 +366,13 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
                         " MIMIR:REPLAN ",
                         Style::default()
                             .fg(palette::BG)
-                            .bg(palette::AMBER)
+                            .bg(palette::MAGENTA)
                             .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
-                        format!("  CYCLE {} — {}", cycle, reason),
+                        format!("  CYCLE {} \u{2014} {}", cycle, reason),
                         Style::default()
-                            .fg(palette::AMBER)
+                            .fg(palette::MUTED)
                             .bg(palette::BG),
                     ),
                 ]));
