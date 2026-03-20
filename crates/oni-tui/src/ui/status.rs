@@ -76,7 +76,9 @@ pub fn draw_footer(app: &App, frame: &mut Frame, area: Rect) {
         palette::MAGENTA
     };
 
-    let line = Line::from(vec![
+    let bg_count = app.active_background_count();
+
+    let mut spans = vec![
         Span::styled(
             format!(" {} ", app.current_tier.display_name()),
             Style::default()
@@ -99,7 +101,19 @@ pub fn draw_footer(app: &App, frame: &mut Frame, area: Rect) {
                 .fg(palette::BG)
                 .bg(palette::ELECTRIC_BLUE),
         ),
-    ]);
+    ];
+
+    if bg_count > 0 {
+        spans.push(Span::styled(
+            format!(" BG:{} ", bg_count),
+            Style::default()
+                .fg(palette::BG)
+                .bg(palette::CYAN)
+                .add_modifier(Modifier::BOLD),
+        ));
+    }
+
+    let line = Line::from(spans);
 
     frame.render_widget(
         Paragraph::new(line).style(Style::default().bg(palette::BG)),

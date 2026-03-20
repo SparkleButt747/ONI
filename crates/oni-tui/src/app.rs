@@ -44,6 +44,20 @@ pub struct ToolDetail {
     pub result: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum TaskStatus {
+    Running,
+    Complete,
+    Failed,
+}
+
+#[derive(Debug, Clone)]
+pub struct BackgroundTask {
+    pub id: u32,
+    pub command: String,
+    pub status: TaskStatus,
+}
+
 #[derive(Debug, Clone)]
 pub struct SubAgentStatus {
     pub mimir: &'static str,   // "IDLE" | "ACTIVE" | "DONE"  — Planner
@@ -122,6 +136,7 @@ pub const SLASH_COMMANDS: &[(&str, &str)] = &[
     ("/agent", "LIST_AGENTS"),
     ("/trace", "SHOW_EXECUTION_TRACE"),
     ("/undo", "UNDO_LAST_CHANGE"),
+    ("/tasks", "BACKGROUND_TASKS"),
     ("/help", "SHOW_ALL_COMMANDS"),
     ("/quit", "EXIT_ONI"),
 ];
@@ -254,6 +269,10 @@ pub struct App {
     pub session_allowed_tools: std::collections::HashSet<String>,
     /// Tools permanently approved.
     pub permanent_allowed_tools: std::collections::HashSet<String>,
+    /// Background tasks tracked via Ctrl+B.
+    pub background_tasks: Vec<BackgroundTask>,
+    /// Next background task ID (monotonically increasing).
+    pub next_task_id: u32,
 }
 
 /// A tool proposal currently shown to the user awaiting y/n/d response.
@@ -344,6 +363,8 @@ impl App {
             verbose_tool_output: false,
             session_allowed_tools: std::collections::HashSet::new(),
             permanent_allowed_tools: std::collections::HashSet::new(),
+            background_tasks: Vec::new(),
+            next_task_id: 1,
         }
     }
 
@@ -392,6 +413,10 @@ impl App {
 
     pub fn toggle_verbose(&mut self) {
         self.verbose_tool_output = !self.verbose_tool_output;
+    }
+
+    pub fn active_background_count(&self) -> usize {
+        self.background_tasks.iter().filter(|t| t.status == TaskStatus::Running).count()
     }
 
     /// Handle a slash command. Returns `true` if handled.
@@ -785,6 +810,22 @@ impl App {
                     "Use the undo tool to revert the last file change.".into(),
                 ));
                 self.is_thinking = true;
+            }
+            "/tasks" => {
+                if self.background_tasks.is_empty() {
+                    self.messages.push(DisplayMessage::System("No background tasks.".into()));
+                } else {
+                    let mut task_lines = vec!["BACKGROUND TASKS:".to_string()];
+                    for task in &self.background_tasks {
+                        let status_icon = match task.status {
+                            TaskStatus::Running => "\u{2022}",
+                            TaskStatus::Complete => "\u{2713}",
+                            TaskStatus::Failed => "\u{2717}",
+                        };
+                        task_lines.push(format!("  {} TASK_{}: {}", status_icon, task.id, task.command));
+                    }
+                    self.messages.push(DisplayMessage::System(task_lines.join("\n")));
+                }
             }
             "/quit" | "/exit" | "/q" => {
                 self.should_quit = true;
@@ -1367,6 +1408,23 @@ pub async fn run(
                     let mode = if app.verbose_tool_output { "VERBOSE" } else { "COLLAPSED" };
                     app.messages.push(DisplayMessage::System(
                         format!("TOOL_OUTPUT -> {}", mode),
+                    ));
+                }
+                // Ctrl+B — background the current operation
+                else if key.modifiers.contains(KeyModifiers::CONTROL)
+                    && key.code == KeyCode::Char('b')
+                    && app.is_thinking
+                {
+                    let task_id = app.next_task_id;
+                    app.next_task_id += 1;
+                    app.background_tasks.push(BackgroundTask {
+                        id: task_id,
+                        command: "[current operation]".into(),
+                        status: TaskStatus::Running,
+                    });
+                    app.is_thinking = false;
+                    app.messages.push(DisplayMessage::System(
+                        format!("TASK_{} -> BACKGROUND", task_id),
                     ));
                 }
                 // Ctrl+R — fuzzy reverse history search
