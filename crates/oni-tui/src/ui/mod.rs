@@ -17,6 +17,7 @@ use crate::app::{App, ViewMode};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout};
 use ratatui::widgets::Widget;
+use crate::widgets::Interference;
 
 pub fn draw(app: &mut App, frame: &mut Frame) {
     let area = frame.area();
@@ -40,6 +41,14 @@ pub fn draw(app: &mut App, frame: &mut Frame) {
     draw_main_content(app, frame, rows[1]);
     input::draw_input(app, frame, rows[2]);
     status::draw_footer(app, frame, rows[3]);
+
+    // Subtle CRT interference — always-on ambient effect
+    Interference {
+        frame: app.boot_frame as u64,
+        spacing: 6,
+        opacity: 0.08,
+    }
+    .render(rows[1], frame.buffer_mut());
 
     // Draw command menu popup on top of everything if visible
     if app.slash_menu_visible {

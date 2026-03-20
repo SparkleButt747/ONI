@@ -432,6 +432,19 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
             }
         }
     }
+
+    // Neon glow trail on the scan-reveal frontier
+    if app.reveal_progress < 1.0 && app.reveal_progress > 0.0 {
+        use crate::widgets::NeonGlow;
+        frame.render_widget(
+            NeonGlow {
+                progress: app.reveal_progress,
+                trail_width: 6,
+                color: palette::MAGENTA,
+            },
+            area,
+        );
+    }
 }
 
 /// Lightweight markdown-to-ratatui renderer. No external deps — handles the subset

@@ -83,6 +83,17 @@ pub fn draw_splash(app: &App, frame: &mut Frame, area: Rect) {
     let content_area = chunks[0];
     let footer_area = chunks[1];
 
+    // Data cascade during boot animation
+    if app.boot_frame < 15 {
+        use crate::widgets::DataCascade;
+        DataCascade {
+            frame: app.boot_frame as u64,
+            density: 0.15,
+            color: palette::LIME,
+        }
+        .render(content_area, frame.buffer_mut());
+    }
+
     // --- Background: tiled text pattern at DIM ---
     frame.render_widget(TiledText, content_area);
 
