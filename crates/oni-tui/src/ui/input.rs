@@ -60,4 +60,21 @@ pub fn draw_input(app: &mut App, frame: &mut Frame, area: Rect) {
     };
 
     frame.render_widget(&app.input, input_area);
+
+    // Show prompt suggestion when input is empty and not thinking
+    if app.input.lines()[0].is_empty() && !app.prompt_suggestion.is_empty() && !app.is_thinking {
+        let suggestion_area = Rect {
+            x: input_area.x,
+            y: input_area.y,
+            width: input_area.width.min(app.prompt_suggestion.len() as u16),
+            height: 1,
+        };
+        frame.render_widget(
+            Paragraph::new(Line::from(Span::styled(
+                app.prompt_suggestion.clone(),
+                Style::default().fg(palette::DIM).bg(palette::BG),
+            ))),
+            suggestion_area,
+        );
+    }
 }

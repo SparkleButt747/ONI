@@ -278,6 +278,8 @@ pub struct App {
     pub file_picker_query: String,
     pub file_picker_selected: usize,
     pub file_picker_files: Vec<String>,
+    /// Current prompt suggestion (shown greyed out in input when idle).
+    pub prompt_suggestion: String,
 }
 
 /// A tool proposal currently shown to the user awaiting y/n/d response.
@@ -374,6 +376,7 @@ impl App {
             file_picker_query: String::new(),
             file_picker_selected: 0,
             file_picker_files: Vec::new(),
+            prompt_suggestion: String::new(),
         }
     }
 
@@ -426,6 +429,31 @@ impl App {
 
     pub fn active_background_count(&self) -> usize {
         self.background_tasks.iter().filter(|t| t.status == TaskStatus::Running).count()
+    }
+
+    pub fn generate_suggestion(&self) -> String {
+        if self.messages.is_empty() {
+            return "Describe what you want to build...".to_string();
+        }
+        match self.messages.last() {
+            Some(DisplayMessage::Error(_)) => "What went wrong?".to_string(),
+            Some(DisplayMessage::CriticVerdict { accepted: false, .. }) => {
+                "How should we fix this?".to_string()
+            }
+            Some(DisplayMessage::Assistant(_)) => "/review or ask a follow-up...".to_string(),
+            Some(DisplayMessage::ToolDetail(_)) => {
+                "Review the changes or continue...".to_string()
+            }
+            _ => String::new(),
+        }
+    }
+
+    pub fn update_suggestion(&mut self) {
+        if !self.is_thinking && self.input.lines()[0].is_empty() {
+            self.prompt_suggestion = self.generate_suggestion();
+        } else {
+            self.prompt_suggestion.clear();
+        }
     }
 
     /// Handle a slash command. Returns `true` if handled.
@@ -1475,6 +1503,16 @@ pub async fn run(
                         }
                     }
                 }
+                // Tab to accept prompt suggestion
+                else if key.code == KeyCode::Tab
+                    && !app.prompt_suggestion.is_empty()
+                    && app.input.lines()[0].is_empty()
+                    && !app.file_picker_visible
+                    && !app.slash_menu_visible
+                {
+                    app.input.insert_str(&app.prompt_suggestion);
+                    app.prompt_suggestion.clear();
+                }
                 // File picker navigation — intercept before slash menu / history / textarea
                 else if app.file_picker_visible && key.code == KeyCode::Down {
                     let filtered_count =
@@ -1751,6 +1789,7 @@ pub async fn run(
             }
             app.handle_agent_event(event);
         }
+        app.update_suggestion();
 
         // Check for tool proposals that need user confirmation
         while let Ok(proposal) = proposal_rx.try_recv() {
