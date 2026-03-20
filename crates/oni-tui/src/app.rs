@@ -247,6 +247,9 @@ pub struct App {
     pub server_url: String,
     /// Server config for auto-starting tier servers.
     pub server_config: Option<ServerConfig>,
+    /// When false (default), tool calls show collapsed one-line summaries.
+    /// Ctrl+O toggles to show full tool output inline.
+    pub verbose_tool_output: bool,
 }
 
 /// A tool proposal currently shown to the user awaiting y/n/d response.
@@ -334,6 +337,7 @@ impl App {
             ],
             server_url: String::new(),
             server_config: None,
+            verbose_tool_output: false,
         }
     }
 
@@ -372,6 +376,10 @@ impl App {
         let start = self.command_history.len().saturating_sub(500);
         let entries = &self.command_history[start..];
         let _ = std::fs::write(&path, entries.join("\n"));
+    }
+
+    pub fn toggle_verbose(&mut self) {
+        self.verbose_tool_output = !self.verbose_tool_output;
     }
 
     /// Handle a slash command. Returns `true` if handled.
@@ -1331,6 +1339,16 @@ pub async fn run(
                     app.view_mode = ViewMode::Chat;
                     app.scroll_offset = 0;
                     app.scroll_locked_to_bottom = true;
+                }
+                // Ctrl+O — toggle verbose tool output
+                else if key.modifiers.contains(KeyModifiers::CONTROL)
+                    && key.code == KeyCode::Char('o')
+                {
+                    app.toggle_verbose();
+                    let mode = if app.verbose_tool_output { "VERBOSE" } else { "COLLAPSED" };
+                    app.messages.push(DisplayMessage::System(
+                        format!("TOOL_OUTPUT -> {}", mode),
+                    ));
                 }
                 // Ctrl+R — fuzzy reverse history search
                 else if key.modifiers.contains(KeyModifiers::CONTROL)

@@ -1,6 +1,7 @@
 use oni_core::palette;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
+use serde_json;
 
 /// Dim lime-tinted background for added lines.
 const BG_ADD: Color = Color::Rgb(12, 20, 4);
@@ -141,6 +142,68 @@ pub fn render_write_result(path: &str, content: &str) -> Vec<Line<'static>> {
     }
 
     lines
+}
+
+/// Render a collapsed single-line tool summary.
+pub fn render_collapsed_tool(name: &str, args: &serde_json::Value, result: &str) -> Line<'static> {
+    let summary = match name {
+        "write_file" => {
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or("?");
+            let content = args.get("content").and_then(|v| v.as_str()).unwrap_or("");
+            let line_count = content.lines().count();
+            format!("Wrote {} [{} lines]", path, line_count)
+        }
+        "bash" => {
+            let cmd = args.get("command").and_then(|v| v.as_str()).unwrap_or("?");
+            let display_cmd = if cmd.len() > 60 {
+                format!(
+                    "{}...",
+                    &cmd[..cmd
+                        .char_indices()
+                        .take(57)
+                        .last()
+                        .map(|(i, _)| i)
+                        .unwrap_or(57)]
+                )
+            } else {
+                cmd.to_string()
+            };
+            let exit_ok = !result.contains("[exit code:") || result.contains("[exit code: 0]");
+            if exit_ok {
+                format!("$ {}", display_cmd)
+            } else {
+                format!("$ {} [FAILED]", display_cmd)
+            }
+        }
+        "edit_file" => {
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or("?");
+            format!("Edited {}", path)
+        }
+        "read_file" => {
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or("?");
+            format!("Read {}", path)
+        }
+        "search_files" => {
+            let pattern = args.get("pattern").and_then(|v| v.as_str()).unwrap_or("?");
+            format!("Searched for \"{}\"", pattern)
+        }
+        _ => format!("{} done", name),
+    };
+
+    Line::from(vec![
+        Span::styled(
+            "  \u{2713} ",
+            Style::default().fg(palette::LIME).bg(palette::BG),
+        ),
+        Span::styled(
+            format!("{:<16}", name.to_uppercase()),
+            Style::default().fg(palette::CYAN).bg(palette::BG),
+        ),
+        Span::styled(
+            summary,
+            Style::default().fg(palette::MUTED).bg(palette::BG),
+        ),
+    ])
 }
 
 /// Render a bash tool result inline in chat.

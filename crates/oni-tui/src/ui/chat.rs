@@ -130,77 +130,66 @@ pub fn draw_chat(app: &mut App, frame: &mut Frame, area: Rect) {
                 lines.push(Line::default());
             }
             DisplayMessage::ToolExec { name, status } => {
-                let tool_name_upper = name.to_uppercase();
-                let name_field = if tool_name_upper.len() >= 16 {
-                    tool_name_upper[..16].to_string()
-                } else {
-                    format!("{:<16}", tool_name_upper)
-                };
                 let status_upper = status.to_uppercase();
-                let status_color = if status_upper.contains("DONE") {
-                    palette::LIME
+                let (icon, status_color) = if status_upper.contains("DONE") {
+                    ("\u{2713}", palette::LIME)
                 } else if status_upper.contains("ERR") || status_upper.contains("FAIL") {
-                    palette::CORAL
+                    ("\u{2717}", palette::CORAL)
                 } else {
-                    palette::MUTED
+                    ("\u{2022}", palette::MUTED)
                 };
                 lines.push(Line::from(vec![
                     Span::styled(
-                        "  TOOL_EXEC  ",
-                        Style::default()
-                            .fg(palette::CYAN)
-                            .bg(palette::BG)
-                            .add_modifier(Modifier::BOLD),
+                        format!("  {} ", icon),
+                        Style::default().fg(status_color).bg(palette::BG),
                     ),
                     Span::styled(
-                        name_field,
-                        Style::default()
-                            .fg(palette::CYAN)
-                            .bg(palette::BG),
+                        name.to_uppercase(),
+                        Style::default().fg(palette::CYAN).bg(palette::BG),
                     ),
                     Span::styled(
-                        "  ",
-                        Style::default().bg(palette::BG),
-                    ),
-                    Span::styled(
-                        status_upper,
-                        Style::default()
-                            .fg(status_color)
-                            .bg(palette::BG),
+                        format!("  {}", status_upper),
+                        Style::default().fg(status_color).bg(palette::BG),
                     ),
                 ]));
             }
             DisplayMessage::ToolDetail(detail) => {
-                match detail.name.as_str() {
-                    "write_file" => {
-                        let path = detail
-                            .args
-                            .get("path")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("?");
-                        let content = detail
-                            .args
-                            .get("content")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("");
-                        lines.extend(diff_view::render_write_result(path, content));
-                        lines.push(Line::default());
+                if app.verbose_tool_output {
+                    // Expanded view — rich preview
+                    match detail.name.as_str() {
+                        "write_file" => {
+                            let path = detail
+                                .args
+                                .get("path")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("?");
+                            let content = detail
+                                .args
+                                .get("content")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            lines.extend(diff_view::render_write_result(path, content));
+                            lines.push(Line::default());
+                        }
+                        "bash" => {
+                            let command = detail
+                                .args
+                                .get("command")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("?");
+                            lines.extend(diff_view::render_bash_result(command, &detail.result));
+                            lines.push(Line::default());
+                        }
+                        _ => {
+                            lines.push(Line::from(Span::styled(
+                                format!("   [{}] DONE", detail.name.to_uppercase()),
+                                Style::default().fg(palette::MUTED).bg(palette::BG),
+                            )));
+                        }
                     }
-                    "bash" => {
-                        let command = detail
-                            .args
-                            .get("command")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("?");
-                        lines.extend(diff_view::render_bash_result(command, &detail.result));
-                        lines.push(Line::default());
-                    }
-                    _ => {
-                        lines.push(Line::from(Span::styled(
-                            format!("   [{}] DONE", detail.name.to_uppercase()),
-                            Style::default().fg(palette::MUTED).bg(palette::BG),
-                        )));
-                    }
+                } else {
+                    // Collapsed view — single line summary
+                    lines.push(diff_view::render_collapsed_tool(&detail.name, &detail.args, &detail.result));
                 }
             }
             DisplayMessage::Error(text) => {
