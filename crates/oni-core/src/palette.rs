@@ -10,16 +10,18 @@ pub const MUTED: Color = Color::Rgb(130, 127, 118);     // --oni-muted  #827f76 
 pub const TEXT: Color = Color::Rgb(200, 197, 187);       // --oni-text   #c8c5bb
 pub const WHITE: Color = Color::Rgb(255, 255, 255);      // --oni-white  #ffffff
 
-// ── Accent palette (semantic) ───────────────────────────────────────────────
-pub const AMBER: Color = Color::Rgb(245, 166, 35);      // --acc-amber   #f5a623 — primary, active, cursor
-pub const CYAN: Color = Color::Rgb(0, 212, 200);        // --acc-cyan    #00d4c8 — tool calls, Executor [⚡]
-pub const CORAL: Color = Color::Rgb(255, 77, 46);       // --acc-coral   #ff4d2e — error, Critic [⊘]
-pub const LIME: Color = Color::Rgb(180, 224, 51);       // --acc-lime    #b4e033 — success, accepted
-pub const VIOLET: Color = Color::Rgb(123, 94, 167);     // --acc-violet  #7b5ea7 — Planner [Σ]
-pub const WARNING: Color = Color::Rgb(232, 197, 71);    // --acc-warning #e8c547 — burn rate alert
+// ── Accent palette (Marathon 2026 "Graphic Realism" neons) ──────────────────
+pub const MAGENTA: Color = Color::Rgb(234, 2, 126);     // --acc-magenta      #ea027e — primary, active, cursor
+pub const ELECTRIC_BLUE: Color = Color::Rgb(54, 1, 251); // --acc-electric-blue #3601fb — Planner [Σ]
+pub const CYAN: Color = Color::Rgb(0, 212, 200);        // --acc-cyan         #00d4c8 — tool calls, Executor [Ψ]
+pub const CORAL: Color = Color::Rgb(255, 77, 46);       // --acc-coral        #ff4d2e — error, Critic [⊘]
+pub const LIME: Color = Color::Rgb(192, 252, 4);        // --acc-lime         #c0fc04 — success, accepted
+pub const WARNING: Color = Color::Rgb(232, 197, 71);    // --acc-warning      #e8c547 — burn rate alert
 
 // ── Legacy aliases (keep older references compiling) ────────────────────────
-pub const DATA: Color = AMBER;                           // primary accent
+pub const AMBER: Color = MAGENTA;                        // was #f5a623, now maps to MAGENTA
+pub const VIOLET: Color = ELECTRIC_BLUE;                 // was #7b5ea7, now maps to ELECTRIC_BLUE
+pub const DATA: Color = MAGENTA;                         // primary accent
 pub const SYSTEM: Color = CYAN;                          // system identity
 pub const ALERT: Color = CORAL;                          // errors/alerts
 pub const STATE: Color = LIME;                           // state announcements
@@ -27,7 +29,7 @@ pub const GHOST: Color = DIM;                            // inactive/ghost eleme
 
 // ── Semantic styles ─────────────────────────────────────────────────────────
 pub fn data_style() -> Style {
-    Style::default().fg(AMBER).bg(BG)
+    Style::default().fg(MAGENTA).bg(BG)
 }
 
 pub fn system_style() -> Style {
@@ -47,11 +49,11 @@ pub fn dim_style() -> Style {
 }
 
 pub fn input_style() -> Style {
-    Style::default().fg(AMBER).bg(BG)
+    Style::default().fg(MAGENTA).bg(BG)
 }
 
 pub fn label_style() -> Style {
-    Style::default().fg(AMBER).bg(BG).add_modifier(Modifier::BOLD)
+    Style::default().fg(MAGENTA).bg(BG).add_modifier(Modifier::BOLD)
 }
 
 pub fn text_style() -> Style {
@@ -60,4 +62,35 @@ pub fn text_style() -> Style {
 
 pub fn muted_style() -> Style {
     Style::default().fg(MUTED).bg(BG)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::style::Color;
+
+    #[test]
+    fn t_palette_1_marathon_neons_exist() {
+        assert_eq!(MAGENTA, Color::Rgb(234, 2, 126));
+        assert_eq!(ELECTRIC_BLUE, Color::Rgb(54, 1, 251));
+        assert_eq!(LIME, Color::Rgb(192, 252, 4));
+    }
+
+    #[test]
+    fn t_palette_2_legacy_aliases_resolve() {
+        assert_eq!(DATA, MAGENTA);
+        assert_eq!(SYSTEM, CYAN);
+        assert_eq!(ALERT, CORAL);
+        assert_eq!(STATE, LIME);
+        assert_eq!(AMBER, MAGENTA);
+        assert_eq!(VIOLET, ELECTRIC_BLUE);
+    }
+
+    #[test]
+    fn t_palette_3_semantic_styles_use_new_accents() {
+        let ds = data_style();
+        assert_eq!(ds.fg, Some(MAGENTA));
+        let is = input_style();
+        assert_eq!(is.fg, Some(MAGENTA));
+    }
 }
