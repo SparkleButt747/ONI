@@ -10,3 +10,7 @@ serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+sysinfo = "0.34"
+libc = "0.2"
+which = "7"
+dirs.workspace = true

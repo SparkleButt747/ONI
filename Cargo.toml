@@ -38,6 +38,7 @@ name = "oni"
 path = "src/main.rs"
 
 [dependencies]
+sysinfo = "0.34"
 oni-core = { path = "crates/oni-core" }
 oni-llm = { path = "crates/oni-llm" }
 oni-agent = { path = "crates/oni-agent" }

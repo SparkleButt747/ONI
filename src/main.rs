@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-mod server_manager;
+use oni::server_manager;
 
 /// Convert config tier_urls (String keys) to ModelTier keys for the router.
 fn parse_tier_urls(config_urls: &HashMap<String, String>) -> HashMap<ModelTier, String> {
@@ -359,10 +359,14 @@ async fn main() -> Result<()> {
         _ => None,
     };
 
-    if let Some(ref tiers) = needed_tiers {
-        let config = load_config(Some(&std::env::current_dir()?))?;
-        if let Err(e) = server_manager::ensure_servers_running(&config, Some(tiers)).await {
-            eprintln!("  server auto-start failed: {}", e);
+    // NOTE: Server auto-start is now handled by ServerManager inside run_chat().
+    // Non-chat commands (ask, run, etc.) still use the old path.
+    if needed_tiers.is_some() && !matches!(cli.command, Some(Commands::Chat { .. }) | None) {
+        if let Some(ref tiers) = needed_tiers {
+            let config = load_config(Some(&std::env::current_dir()?))?;
+            if let Err(e) = server_manager::ensure_servers_running(&config, Some(tiers)).await {
+                eprintln!("  server auto-start failed: {}", e);
+            }
         }
     }
 
@@ -699,7 +703,24 @@ async fn run_chat(
         agent_config.session_budget = budget;
     }
 
-    oni_tui::run(router, db, db_path, agent_config, config.ui, config.models, config.server).await
+    let server_manager = Arc::new(oni_llm::ServerManager::new(
+        config.server.clone(),
+        config.models.clone(),
+        config.server.memory_headroom,
+        config.server.memory_multiplier,
+    ));
+    server_manager.restore_state().await;
+
+    // Start needed tier servers using the SAME manager that the TUI will use
+    if config.server.auto_start {
+        let default_tier = config.models.default_tier.key();
+        let startup_tiers: &[&str] = &[default_tier, "heavy", "general"];
+        if let Err(e) = oni_llm::server_manager::ensure_servers_running_via(&server_manager, Some(startup_tiers)).await {
+            eprintln!("  server auto-start failed: {}", e);
+        }
+    }
+
+    oni_tui::run(router, db, db_path, agent_config, config.ui, config.models, config.server, server_manager).await
 }
 
 async fn run_ask(question: &str, tier: ModelTier) -> Result<()> {
@@ -918,6 +939,9 @@ fn handle_headless_event(
         }
         AgentEvent::Response(text) => {
             *final_response = text.clone();
+        }
+        AgentEvent::SystemMessage(text) => {
+            eprintln!("[SYSTEM] {}", text);
         }
         AgentEvent::Error(text) => {
             eprintln!("[ERROR] {}", text);

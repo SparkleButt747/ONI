@@ -80,6 +80,7 @@ pub struct ServerInstance {
     pub gguf_path: PathBuf,
     pub estimated_mem: u64,
     pub last_used: Instant,
+    pub started_at: u64, // unix timestamp
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -204,6 +205,7 @@ impl ServerManager {
                     gguf_path: PathBuf::from(persisted.gguf_path),
                     estimated_mem: persisted.estimated_mem,
                     last_used: Instant::now(),
+                    started_at: persisted.started_at,
                 },
             );
             eprintln!("  {} → adopted (PID {})", tier.display_name(), persisted.pid);
@@ -214,17 +216,24 @@ impl ServerManager {
     pub async fn ensure_loaded(&self, tier: ModelTier) -> Result<()> {
         let url = self.url_for_tier(tier);
 
-        // Fast path: already registered and healthy
-        {
-            let mut instances = self.instances.write().await;
-            if let Some(inst) = instances.get_mut(&tier) {
-                if is_pid_alive(inst.pid) && check_health(&url).await {
+        // Fast path: already registered and healthy.
+        // Read snapshot first, then release lock before async health check.
+        let existing_pid = {
+            let instances = self.instances.read().await;
+            instances.get(&tier).map(|inst| inst.pid)
+        };
+
+        if let Some(pid) = existing_pid {
+            if is_pid_alive(pid) && check_health(&url).await {
+                // Still alive — update last_used under write lock
+                let mut instances = self.instances.write().await;
+                if let Some(inst) = instances.get_mut(&tier) {
                     inst.last_used = Instant::now();
-                    return Ok(());
                 }
-                // Stale entry — remove it
-                instances.remove(&tier);
+                return Ok(());
             }
+            // Stale entry — remove it
+            self.instances.write().await.remove(&tier);
         }
 
         // Resolve GGUF path
@@ -280,7 +289,13 @@ impl ServerManager {
             }
 
             if !plan.tiers_to_evict.is_empty() {
+                // Wait for OS to reclaim memory, then verify
                 tokio::time::sleep(Duration::from_secs(2)).await;
+                let rechecked = crate::memory::system_memory();
+                if rechecked.available < estimated_mem {
+                    // Still tight — wait a bit longer
+                    tokio::time::sleep(Duration::from_secs(3)).await;
+                }
             }
         }
 
@@ -359,13 +374,14 @@ impl ServerManager {
         }
 
         let url = self.url_for_tier(tier);
-        let healthy = {
+        // Snapshot PID under lock, then release before async health check
+        let target_pid = {
             let instances = self.instances.read().await;
-            if let Some(inst) = instances.get(&tier) {
-                is_pid_alive(inst.pid) && check_health(&url).await
-            } else {
-                false
-            }
+            instances.get(&tier).map(|inst| inst.pid)
+        };
+        let healthy = match target_pid {
+            Some(pid) => is_pid_alive(pid) && check_health(&url).await,
+            None => false,
         };
 
         if !healthy {
@@ -380,15 +396,8 @@ impl ServerManager {
     }
 
     /// List tiers that currently have a live, registered server.
-    pub fn loaded_tiers(&self) -> Vec<ModelTier> {
-        // Sync accessor — returns a snapshot without awaiting
-        // Callers needing an up-to-date view should await the lock externally.
-        // For non-async context, we use `blocking_read`.
-        self.instances
-            .blocking_read()
-            .keys()
-            .copied()
-            .collect()
+    pub async fn loaded_tiers(&self) -> Vec<ModelTier> {
+        self.instances.read().await.keys().copied().collect()
     }
 
     /// Stop all running servers.
@@ -414,10 +423,6 @@ impl ServerManager {
     /// Persist current instance state to /tmp/oni-servers.json.
     pub async fn save_state(&self) {
         let instances = self.instances.read().await;
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
 
         let servers: HashMap<String, PersistedInstance> = instances
             .values()
@@ -429,7 +434,7 @@ impl ServerManager {
                     model_name: inst.model_name.clone(),
                     gguf_path: inst.gguf_path.to_string_lossy().into_owned(),
                     estimated_mem: inst.estimated_mem,
-                    started_at: now,
+                    started_at: inst.started_at,
                 };
                 (inst.tier.key().to_string(), persisted)
             })
@@ -489,7 +494,7 @@ impl ServerManager {
             .arg(tier_config.parallel.to_string());
 
         if tier_config.flash_attn {
-            cmd.arg("-fa").arg("on");
+            cmd.arg("--flash-attn");
         }
         if let Some(ref k) = tier_config.cache_type_k {
             cmd.arg("--cache-type-k").arg(k);
@@ -529,6 +534,11 @@ impl ServerManager {
             pid
         );
 
+        let started_at = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
         Ok(ServerInstance {
             pid,
             port,
@@ -537,6 +547,7 @@ impl ServerManager {
             gguf_path,
             estimated_mem,
             last_used: Instant::now(),
+            started_at,
         })
     }
 }

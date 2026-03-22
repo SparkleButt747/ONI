@@ -20,6 +20,4 @@ throbber-widgets-tui = "0.8"
 serde_json = "1"
 dirs.workspace = true
 reqwest.workspace = true
-which = "7"
-libc = "0.2"
 walkdir = "2"

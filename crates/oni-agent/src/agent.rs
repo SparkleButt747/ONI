@@ -41,6 +41,7 @@ pub enum AgentEvent {
     /// Orchestrator is replanning after a rejection.
     Replanning { cycle: usize, reason: String },
     Response(String),
+    SystemMessage(String),
     Error(String),
     Done { tokens: u64, duration_ms: u64 },
     /// Budget exhausted — session or monthly limit hit.

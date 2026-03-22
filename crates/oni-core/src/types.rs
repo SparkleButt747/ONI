@@ -80,6 +80,17 @@ impl ModelTier {
         }
     }
 
+    /// Return the lowercase string key for this tier (inverse of `from_key`).
+    pub fn key(&self) -> &'static str {
+        match self {
+            Self::Heavy => "heavy",
+            Self::Medium => "medium",
+            Self::General => "general",
+            Self::Fast => "fast",
+            Self::Embed => "embed",
+        }
+    }
+
     /// Parse a tier from a lowercase string key (used in config tier_urls).
     pub fn from_key(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {

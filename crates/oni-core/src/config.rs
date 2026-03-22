@@ -53,6 +53,12 @@ pub struct ServerConfig {
     pub models_dir: String,
     #[serde(default)]
     pub tiers: std::collections::HashMap<String, TierServerConfig>,
+    /// Memory headroom to keep free (bytes). Default: 4GB.
+    #[serde(default = "default_memory_headroom")]
+    pub memory_headroom: u64,
+    /// GGUF file size → runtime memory multiplier. Default: 1.3.
+    #[serde(default = "default_memory_multiplier")]
+    pub memory_multiplier: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,6 +105,12 @@ fn default_parallel() -> u32 {
 }
 fn default_gpu_layers() -> u32 {
     99
+}
+fn default_memory_headroom() -> u64 {
+    4 * 1024 * 1024 * 1024 // 4 GB
+}
+fn default_memory_multiplier() -> f64 {
+    1.3
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -312,6 +324,8 @@ impl Default for ServerConfig {
             auto_start: false,
             models_dir: default_models_dir(),
             tiers: std::collections::HashMap::new(),
+            memory_headroom: default_memory_headroom(),
+            memory_multiplier: default_memory_multiplier(),
         }
     }
 }

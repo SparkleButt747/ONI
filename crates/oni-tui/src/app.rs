@@ -930,6 +930,9 @@ impl App {
                 self.is_thinking = false;
                 self.messages.push(DisplayMessage::Assistant(text));
             }
+            AgentEvent::SystemMessage(text) => {
+                self.messages.push(DisplayMessage::System(text));
+            }
             AgentEvent::ToolExec { name, status, args, result } => {
                 // Record in tool history for Mission Control
                 let args_summary = summarise_args(&name, &args);
@@ -959,12 +962,20 @@ impl App {
             }
             AgentEvent::Error(text) => {
                 self.is_thinking = false;
-
-                // Detect critical LLM server connectivity failures
                 let lower = text.to_lowercase();
+
+                // Compute/retry errors are handled by recovery logic — show as regular message
+                if lower.contains("compute error")
+                    || lower.contains("retry failed")
+                    || lower.contains("recovery failed")
+                {
+                    self.messages.push(DisplayMessage::Error(text));
+                    return;
+                }
+
+                // Only truly unrecoverable errors go to critical screen
                 let is_critical = lower.contains("connection refused")
                     || lower.contains("failed to connect")
-                    || (lower.contains("llama-server") && lower.contains("error"))
                     || lower.contains("os error 111")
                     || lower.contains("no such host");
 
@@ -1046,6 +1057,7 @@ pub async fn run(
     ui_config: UiConfig,
     model_config: ModelConfig,
     server_config: ServerConfig,
+    server_manager: Arc<oni_llm::ServerManager>,
 ) -> Result<()> {
     // Enable mouse capture for scroll support
     crossterm::execute!(
@@ -1181,7 +1193,7 @@ pub async fn run(
     // Pass shared trace and event bus into agent task
     let agent_trace = shared_trace;
     let agent_event_bus = shared_event_bus;
-    let spawn_server_config = server_config;
+    let agent_server_manager = server_manager.clone();
 
     tokio::spawn(async move {
         let mut agent = Agent::new_with_prefs(
@@ -1212,14 +1224,58 @@ pub async fn run(
                     match agent.run_turn(&message).await {
                         Ok(_) => {}
                         Err(e) => {
-                            agent.event_bus.publish(AgentEvent::Error(e.to_string()));
+                            let err_str = e.to_string();
+                            if err_str.contains("COMPUTE ERROR")
+                                || err_str.contains("compute error")
+                                || (err_str.contains("500") && err_str.contains("SERVER_ERROR"))
+                            {
+                                agent.event_bus.publish(AgentEvent::SystemMessage(
+                                    "COMPUTE ERROR \u{2014} recovering...".into()
+                                ));
+                                let tier = agent.current_tier();
+                                match agent_server_manager.recover(tier).await {
+                                    Ok(()) => {
+                                        agent.event_bus.publish(AgentEvent::SystemMessage(
+                                            "Recovery complete \u{2014} retrying...".into()
+                                        ));
+                                        match agent.run_turn(&message).await {
+                                            Ok(_) => {}
+                                            Err(retry_err) => {
+                                                agent.event_bus.publish(AgentEvent::Error(
+                                                    format!("Retry failed: {}", retry_err)
+                                                ));
+                                            }
+                                        }
+                                    }
+                                    Err(recover_err) => {
+                                        agent.event_bus.publish(AgentEvent::Error(
+                                            format!("Recovery failed: {}", recover_err)
+                                        ));
+                                    }
+                                }
+                            } else {
+                                agent.event_bus.publish(AgentEvent::Error(err_str));
+                            }
                         }
                     }
                 }
                 AgentCommand::SetTier(new_tier) => {
                     agent.set_tier(new_tier);
-                    // Auto-start the server for the new tier
-                    ensure_tier_server(new_tier, &spawn_server_config).await;
+                    agent.event_bus.publish(AgentEvent::SystemMessage(
+                        format!("Loading {} model...", new_tier.display_name())
+                    ));
+                    match agent_server_manager.ensure_loaded(new_tier).await {
+                        Ok(()) => {
+                            agent.event_bus.publish(AgentEvent::SystemMessage(
+                                format!("{} ready", new_tier.display_name())
+                            ));
+                        }
+                        Err(e) => {
+                            agent.event_bus.publish(AgentEvent::Error(
+                                format!("Failed to load {}: {}", new_tier.display_name(), e)
+                            ));
+                        }
+                    }
                 }
                 AgentCommand::SetAutonomy(level) => {
                     agent.set_autonomy(level);
@@ -1940,126 +1996,3 @@ pub async fn run(
     Ok(())
 }
 
-/// Auto-start a llama-server for a given tier if it's not already running.
-/// Called from the SetTier command handler inside the async task.
-async fn ensure_tier_server(tier: ModelTier, server_config: &ServerConfig) {
-    let tier_name = match tier {
-        ModelTier::Heavy => "heavy",
-        ModelTier::Medium => "medium",
-        ModelTier::General => "general",
-        ModelTier::Fast => "fast",
-        ModelTier::Embed => "embed",
-    };
-
-    let tier_url = match server_config.tier_urls.get(tier_name) {
-        Some(url) => url.clone(),
-        None => return,
-    };
-
-    let tier_cfg = match server_config.tiers.get(tier_name) {
-        Some(cfg) => cfg.clone(),
-        None => return,
-    };
-
-    // Health check — already running?
-    let healthy = reqwest::Client::new()
-        .get(format!("{}/health", tier_url))
-        .timeout(std::time::Duration::from_secs(2))
-        .send()
-        .await
-        .map(|r| r.status().is_success())
-        .unwrap_or(false);
-
-    if healthy {
-        return;
-    }
-
-    // Find llama-server
-    let llama_server = match which::which("llama-server") {
-        Ok(p) => p,
-        Err(_) => return,
-    };
-
-    // Resolve model path
-    let models_dir = if let Some(rest) = server_config.models_dir.strip_prefix("~/") {
-        dirs::home_dir().map(|h| h.join(rest)).unwrap_or_else(|| std::path::PathBuf::from(&server_config.models_dir))
-    } else {
-        std::path::PathBuf::from(&server_config.models_dir)
-    };
-    let gguf_path = models_dir.join(&tier_cfg.gguf);
-    if !gguf_path.exists() {
-        return;
-    }
-
-    // Extract port
-    let port = tier_url
-        .rsplit(':')
-        .next()
-        .and_then(|s| s.trim_end_matches('/').parse::<u16>().ok())
-        .unwrap_or(8080);
-
-    let log_path = format!("/tmp/oni-{}.log", tier_name);
-    let log_file = match std::fs::File::create(&log_path) {
-        Ok(f) => f,
-        Err(_) => return,
-    };
-    let log_stderr = match log_file.try_clone() {
-        Ok(f) => f,
-        Err(_) => return,
-    };
-
-    let mut cmd = std::process::Command::new(&llama_server);
-    cmd.arg("--model").arg(&gguf_path)
-        .arg("--port").arg(port.to_string())
-        .arg("--ctx-size").arg(tier_cfg.ctx_size.to_string())
-        .arg("--n-gpu-layers").arg(tier_cfg.gpu_layers.to_string())
-        .arg("--threads").arg(tier_cfg.threads.to_string())
-        .arg("--threads-batch").arg(tier_cfg.threads_batch.to_string())
-        .arg("--parallel").arg(tier_cfg.parallel.to_string());
-
-    if tier_cfg.flash_attn {
-        cmd.arg("-fa").arg("on");
-    }
-    if let Some(ref k) = tier_cfg.cache_type_k {
-        cmd.arg("--cache-type-k").arg(k);
-    }
-    if let Some(ref v) = tier_cfg.cache_type_v {
-        cmd.arg("--cache-type-v").arg(v);
-    }
-    for arg in &tier_cfg.extra_args {
-        cmd.arg(arg);
-    }
-
-    cmd.stdout(log_file)
-        .stderr(log_stderr)
-        .stdin(std::process::Stdio::null());
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        unsafe {
-            cmd.pre_exec(|| {
-                libc::setsid();
-                Ok(())
-            });
-        }
-    }
-
-    if cmd.spawn().is_ok() {
-        // Wait for health (up to 120s)
-        let start = std::time::Instant::now();
-        while start.elapsed() < std::time::Duration::from_secs(120) {
-            let ok = reqwest::Client::new()
-                .get(format!("{}/health", tier_url))
-                .timeout(std::time::Duration::from_secs(2))
-                .send()
-                .await
-                .map(|r| r.status().is_success())
-                .unwrap_or(false);
-            if ok {
-                break;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        }
-    }
-}
